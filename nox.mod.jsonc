@@ -1,0 +1,33 @@
+{
+  "type": "mod",
+  "id": "nox.network",
+  "provides": [
+    "fr.hactazia.network",
+    "network"
+  ],
+  "name": "Network",
+  "version": "1.0.0",
+  "description": "A networking API for Nox.",
+  "license": "GPL-3.0",
+  "icon": null,
+  "contact": {
+    "email": "hactazia@gmail.com",
+    "source": "https://github.com/AtelierVR/nox.network",
+    "website": "https://nox.hactazia.fr/",
+    "issues": "https://github.com/AtelierVR/nox.network/issues"
+  },
+  "authors": [
+    {
+      "name": "Hactazia",
+      "email": "hactazia@gmail.com",
+      "website": "https://hactazia.fr/"
+    }
+  ],
+  "contributors": [],
+  "relations": [ ],
+  "entrypoints": {
+    "main": [
+      "Nox.Network.Runtime.Main"
+    ]
+  }
+}

@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<linker>
+	<assembly fullname="Nox.CCK.Network" preserve="all" />
+	<assembly fullname="Nox.Mods.Network" preserve="all" />
+	<assembly fullname="Nox.Network" preserve="all" />
+	<assembly fullname="Nox.Network.Runtime" preserve="all" />
+</linker>
