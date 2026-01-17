@@ -11,6 +11,7 @@ using Nox.CCK.Mods.Initializers;
 using Nox.CCK.Network;
 using Nox.CCK.Utils;
 using Nox.Users;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
 using Logger = Nox.CCK.Utils.Logger;
@@ -73,25 +74,26 @@ namespace Nox.Network.Runtime {
 		}
 
 		#if UNITY_EDITOR
+		[MenuItem("Tools/Nox/Network Test Upload")]
+		public static void TestUpload()
+			=> _instance?.OnPostInitializeMainAsync().Forget();
+
 		public async UniTask OnPostInitializeMainAsync() {
-			var req = RequestExtension.To("https://postman-echo.com/post");
+			var req = RequestExtension.To("https://httpbin.org/post");
 			req.method = RequestExtension.Method.POST;
-			var form = new WWWForm();
 
-			form.AddField("test_field", "test_value");
 			var rng = new System.Random();
-			var randomBytes = new byte[rng.Next(16, 1024)];
+			var randomBytes = new byte[rng.Next(16, 128)];
 			rng.NextBytes(randomBytes);
-			form.AddBinaryData(
-				"file",
-				randomBytes,
-				"test_file.txt",
-				"text/plain"
-			);
 
-			req.SetBody(form);
-			await RequestExtension.Send(req);
-			Logger.LogDebug("Test: " + await req.Text());
+			req.SetBody(new List<IMultipartFormSection>() {
+				new MultipartFormDataSection("test_field", "test_value"),
+				new MultipartFormFileSection("file", randomBytes, "test_file.txt", "text/plain")
+			});
+
+			if (await RequestExtension.Send(req) && req.responseCode == 200)
+				Logger.LogDebug("Upload successful! " + await req.Text(), tag: "TestNetwork");
+			else Logger.LogWarning($"Upload failed with code {req.responseCode}", tag: "TestNetwork");
 		}
 		#endif
 
@@ -166,7 +168,7 @@ namespace Nox.Network.Runtime {
 					File.Delete(tmp);
 				return null;
 			}
-			
+
 			return tmp;
 		}
 	}

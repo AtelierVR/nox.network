@@ -65,60 +65,45 @@ namespace Nox.CCK.Network {
 		public static readonly NoxEventAsync<UnityWebRequest> OnCompleted = new();
 
 		public static Request To(string url) {
-			var req = new Request(url) { method = Method.GET };
+			var req = new Request(url) { method = Method.GET, downloadHandler = new DownloadHandlerBuffer() };
 			OnCreated.Invoke(req);
 			return req;
 		}
 
+		public static void SetBody(this UnityWebRequest request, JObject json, string contentType = "application/json")
+			=> request.SetBody((JToken)json, contentType);
+
 		public static void SetBody(this UnityWebRequest request, JToken json, string contentType = "application/json") {
 			if (json == null) throw new ArgumentNullException(nameof(json));
-			var bodyRaw = Encoding.UTF8.GetBytes(json.ToString());
-			request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-			request.uploadHandler.contentType = contentType;
+			request.SetBody(json.ToString(), contentType);
 		}
 
 		public static void SetBody(this UnityWebRequest request, string body, string contentType = "text/plain") {
 			if (body == null) throw new ArgumentNullException(nameof(body));
-			var bodyRaw = Encoding.UTF8.GetBytes(body);
-			request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-			request.uploadHandler.contentType = contentType;
+			request.SetBody(Encoding.UTF8.GetBytes(body), contentType);
 		}
 
 		public static void SetBody(this UnityWebRequest request, byte[] body, string contentType = "application/octet-stream") {
 			if (body == null) throw new ArgumentNullException(nameof(body));
 			request.uploadHandler = new UploadHandlerRaw(body);
-			request.uploadHandler.contentType = contentType;
+			request.SetRequestHeader("Content-Type", contentType);
 		}
 
-		public static void SetBody(this UnityWebRequest request, Dictionary<string, object> formData) {
+		public static void SetBody(this UnityWebRequest request, List<IMultipartFormSection> formData) {
 			if (formData == null) throw new ArgumentNullException(nameof(formData));
-			var form = new WWWForm();
-			foreach (var field in formData)
-				if (field.Value is string str)
-					form.AddField(field.Key, str);
-				else if (field.Value is byte[] bytes)
-					form.AddBinaryData(field.Key, bytes);
-				else form.AddField(field.Key, field.Value.ToString());
-			request.SetBody(form);
+
+			var boundary = UnityWebRequest.GenerateBoundary();
+			var formSections = UnityWebRequest.SerializeFormSections(formData, boundary);
+			var contentType = $"multipart/form-data; boundary={Encoding.UTF8.GetString(boundary)}";
+
+			request.uploadHandler = new UploadHandlerRaw(formSections);
+			request.SetRequestHeader("Content-Type", contentType);
 		}
 
-		public static void SetBody(this UnityWebRequest request, WWWForm form) {
-			if (form == null) throw new ArgumentNullException(nameof(form));
-			request.uploadHandler = new UploadHandlerRaw(form.data);
-			if (form.headers.TryGetValue("Content-Type", out var contentType)) 
-				request.uploadHandler.contentType = contentType;
-			foreach (var field in form.headers) {
-				if (field.Key.Equals("Content-Type", StringComparison.OrdinalIgnoreCase)) continue;
-				request.SetRequestHeader(field.Key, field.Value);
-			}
-		}
 
 		public static void SetBody<T>(this UnityWebRequest request, T obj, string contentType = "application/json") {
 			if (obj == null) throw new ArgumentNullException(nameof(obj));
-			var json = JsonConvert.SerializeObject(obj);
-			var bodyRaw = Encoding.UTF8.GetBytes(json);
-			request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-			request.uploadHandler.contentType = contentType;
+			request.SetBody(JsonConvert.SerializeObject(obj), contentType);
 		}
 
 		public static void SetHeaders(this UnityWebRequest request, IReadOnlyDictionary<string, string> headers) {
@@ -140,6 +125,7 @@ namespace Nox.CCK.Network {
 
 		public static async UniTask<bool> Send(this UnityWebRequest request, CancellationToken token = default) {
 			if (request.IsSent()) {
+				Logger.LogDebug("Request has already been sent. Waiting for completion...");
 				await request.Wait(token);
 				return request.IsSuccess();
 			}
@@ -148,44 +134,23 @@ namespace Nox.CCK.Network {
 
 			if (token.IsCancellationRequested) {
 				request.Abort();
+				Logger.LogWarning("Request was cancelled before sending.");
 				return false;
 			}
 
 			try {
-				var operation = request.SendWebRequest();
+				await request.SendWebRequest()
+					.ToUniTask(cancellationToken: token);
 
-				// Track last activity to detect stalls
-				var lastProgress = 0f;
-				var staleFrames = 0;
-				const int maxStaleFrames = 300; // ~5 seconds at 60fps
+				if (!request.IsSuccess())
+					throw new Exception("The request completed with an error.");
 
-				while (!operation.isDone) {
-					if (token.IsCancellationRequested) {
-						request.Abort();
-						return false;
-					}
-
-					// Check for progress to detect network stalls
-					var currentProgress = request.uploadProgress > 0 ? request.uploadProgress : request.downloadProgress;
-					if (Math.Abs(currentProgress - lastProgress) < 0.0001f) {
-						staleFrames++;
-						if (staleFrames > maxStaleFrames) {
-							Debug.LogWarning($"Request appears stalled at {currentProgress:P2}. Aborting.");
-							request.Abort();
-							return false;
-						}
-					}
-					else {
-						staleFrames = 0;
-						lastProgress = currentProgress;
-					}
-
-					await UniTask.Yield();
-				}
-
-				return request.IsSuccess();
+				return true;
 			} catch (Exception ex) {
-				Debug.LogError($"Request failed: {ex.Message}\nURL: {request.url}\nMethod: {request.method}\nError: {request.error}");
+				Logger.LogError(new Exception(
+					$"Request to {request.method} {request.url} failed with exception: {request.result} - {request.error}",
+					ex
+				));
 				return false;
 			}
 			finally {
@@ -274,8 +239,6 @@ namespace Nox.CCK.Network {
 
 					await UniTask.Yield();
 				}
-
-				callback.Invoke(request.downloadProgress, request.downloadedBytes);
 			}
 		}
 
@@ -310,8 +273,6 @@ namespace Nox.CCK.Network {
 
 					await UniTask.Yield();
 				}
-
-				callback.Invoke(request.uploadProgress, request.uploadedBytes);
 			}
 		}
 	}
