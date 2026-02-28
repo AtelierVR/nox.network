@@ -139,6 +139,7 @@ namespace Nox.CCK.Network {
 			}
 
 			try {
+				LogFetch(request);
 				await request.SendWebRequest()
 					.ToUniTask(cancellationToken: token);
 
@@ -156,6 +157,24 @@ namespace Nox.CCK.Network {
 			finally {
 				await OnCompleted.InvokeAsync(request);
 			}
+		}
+
+		private static void LogFetch(UnityWebRequest request) {
+			var mc = request.method switch {
+				Method.GET    => Color.cyan,
+				Method.POST   => Color.green,
+				Method.PUT    => Color.yellow,
+				Method.DELETE => Color.red,
+				_             => Color.white
+			};
+			
+			var urlDisplay = request.url.Length > 64
+				? request.url[..64]
+				: request.url;
+
+			Logger.Log($"Fetching [<color=#{ColorUtility.ToHtmlStringRGB(mc)}>{request.method}</color>] <a href=\"{request.url}\">{urlDisplay}</a>...",
+				tag: "Network"
+			);
 		}
 
 		public static bool Ok(this UnityWebRequest request)

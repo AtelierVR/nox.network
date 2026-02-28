@@ -109,7 +109,6 @@ namespace Nox.Network.Runtime {
 			if (string.IsNullOrEmpty(url))
 				return null;
 
-			Logger.Log($"Fetching [TEXTURE] {url}...", tag: "Network");
 			var request = _activeRequests.FirstOrDefault(r => r.url == url);
 
 			if (request == null) {
@@ -138,8 +137,6 @@ namespace Nox.Network.Runtime {
 			}
 
 			var tmp = Path.Combine(Application.temporaryCachePath, Guid.NewGuid().ToString());
-
-			Logger.Log($"Fetching [FILE] {url}...", tag: "Network");
 			var request = _activeRequests.FirstOrDefault(r => r.url == url);
 
 			if (request == null) {
