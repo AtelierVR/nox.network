@@ -12,7 +12,8 @@ namespace Nox.CCK.Network {
 		public const ushort DEFAULT_PORT_MASTER = 53032;
 
 		public static async UniTask<Uri> FindGatewayMaster(string address) {
-			if (string.IsNullOrEmpty(address)) return null;
+			if (string.IsNullOrEmpty(address))
+				return null;
 
 			// check in config
 			var config = Config.Load();
@@ -27,12 +28,13 @@ namespace Nox.CCK.Network {
 			// check with dns
 			var t0 = DateTime.Now;
 
-			var host = address.Split(':');
+			var host    = address.Split(':');
 			var uriType = Uri.CheckHostName(host[0]);
 			if (uriType is UriHostNameType.IPv4 or UriHostNameType.IPv6) {
 				Logger.LogDebug($"FindGatewayMaster: IPv4/IPv6 {address}");
 				var uri = new Uri($"tcp://{address}");
-				if (uri.Port == -1) uri = new Uri($"tcp://{address}:{DEFAULT_PORT_MASTER}");
+				if (uri.Port == -1)
+					uri = new Uri($"tcp://{address}:{DEFAULT_PORT_MASTER}");
 				var fmg = await FindGm($"{uri.Host}:{uri.Port}", true);
 				return Debugger(fmg != null ? fmg : null);
 			}
@@ -40,7 +42,8 @@ namespace Nox.CCK.Network {
 			if (host[0] == "localhost") {
 				Logger.LogDebug($"FindGatewayMaster: localhost {address}");
 				var uri = new Uri($"tcp://{address}");
-				if (uri.Port == -1) uri = new Uri($"tcp://{address}:{DEFAULT_PORT_MASTER}");
+				if (uri.Port == -1)
+					uri = new Uri($"tcp://{address}:{DEFAULT_PORT_MASTER}");
 				var fmg = await FindGm($"{uri.Host}:{uri.Port}", true);
 				return Debugger(fmg != null ? fmg : null);
 			}
@@ -48,14 +51,27 @@ namespace Nox.CCK.Network {
 			if (uriType == UriHostNameType.Dns) {
 				Logger.LogDebug($"FindGatewayMaster: DNS {address}");
 				var uri = new Uri($"tcp://{address}");
-				if (uri.Port == -1) uri = new Uri($"tcp://{address}:{DEFAULT_PORT_MASTER}");
-				var fmg = await FindGm($"{uri.Host}:{uri.Port}");
+				if (uri.Port == -1)
+					uri = new Uri($"tcp://{address}:{DEFAULT_PORT_MASTER}");
+				
+				var uris = await ResolveMasterDns(uri.Host);
+				Uri fmg;
+				
+				if (uris.Length > 0) 
+					foreach (var u in uris) {
+						fmg = await FindGm($"{u.Host}:{u.Port}");
+						if (fmg == null)
+							continue;
+						Logger.LogDebug($"{fmg.Host}:{fmg.Port} (DNS)");
+						return Debugger(fmg);
+					}
+
+				fmg = await FindGm($"{uri.Host}:{uri.Port}");
+				
 				if (fmg != null) {
 					Logger.LogDebug($"{fmg.Host}:{fmg.Port} (DNS)");
 					return Debugger(fmg);
 				}
-
-				return Debugger((await ResolveMasterDns(uri.Host)).FirstOrDefault());
 			}
 
 			return null;
@@ -70,7 +86,7 @@ namespace Nox.CCK.Network {
 		private static async UniTask<Uri[]> ResolveMasterDns(string domain) {
 			Logger.LogDebug($"ResolveMasterDns: domain {domain}");
 			List<Uri> uris = new();
-			var url = $"https://dns.google/resolve?name=_nox.{domain}&type=TXT";
+			var       url  = $"https://dns.google/resolve?name=_nox.{domain}&type=TXT";
 			try {
 				var req = new UnityWebRequest(
 					url,
@@ -103,6 +119,7 @@ namespace Nox.CCK.Network {
 			var protos = forceHttp ? new[] { "http" } : new[] { "https", "http" };
 			foreach (var protocol in protos)
 				try {
+					Logger.LogDebug($"FindGm: try {protocol}://{domain}");
 					var uri = new Uri($"{protocol}://{domain}/.well-known/nox");
 					var req = new UnityWebRequest(uri, UnityWebRequest.kHttpVerbGET)
 						{ downloadHandler = new DownloadHandlerBuffer() };
