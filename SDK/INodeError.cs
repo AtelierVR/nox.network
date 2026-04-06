@@ -6,8 +6,7 @@ namespace Nox.Network {
 		/// <summary>
 		/// Is the specific error code of the Message.
 		/// </summary>
-		public uint Code { get; }
-		
+		public string Code { get; }
 		/// <summary>
 		/// Error message.
 		/// </summary>

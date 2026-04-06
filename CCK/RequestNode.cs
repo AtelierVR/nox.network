@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Nox.CCK.Events;
+using Nox.CCK.Utils;
 using UnityEngine.Networking;
 
 namespace Nox.CCK.Network {
@@ -26,6 +27,9 @@ namespace Nox.CCK.Network {
 			if (string.IsNullOrEmpty(gateway)) return null;
 			var req = RequestExtension.To(RequestExtension.MergeUrl(gateway, path));
 			req.downloadHandler = new DownloadHandlerBuffer();
+			var token = Config.Load().Get<string>(new[] { "servers", address, "_token" });
+			if (!string.IsNullOrEmpty(token))
+				req.SetRequestHeader("Authorization", $"Bearer {token}");
 			await OnCreated.InvokeAsync(address, req);
 			return req;
 		}

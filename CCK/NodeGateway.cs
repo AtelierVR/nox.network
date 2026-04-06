@@ -1,148 +1,295 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Cysharp.Threading.Tasks;
+using Newtonsoft.Json;
 using Nox.CCK.Utils;
 using UnityEngine;
 using UnityEngine.Networking;
 using Logger = Nox.CCK.Utils.Logger;
 
-namespace Nox.CCK.Network {
-	public static class NodeGateway {
-		public const ushort DEFAULT_PORT_MASTER = 53032;
+namespace Nox.CCK.Network
+{
+	public class DiscoveredGateway
+	{
+		public string GatewayUrl;
+		public DateTime ExpiresAt;
+		public NoxWellKnown WellKnown;
+	}
 
-		public static async UniTask<Uri> FindGatewayMaster(string address) {
-			if (string.IsNullOrEmpty(address))
-				return null;
+	public static class NodeGateway
+	{
+		private const string WellKnownPath = "/.well-known/nox";
+		private const string NodeInfoPath = "/.well-known/nodeinfo";
+		private const string NoxNodeInfoRel = "nox/1.0";
+		private static readonly TimeSpan FallbackTtl = TimeSpan.FromMinutes(5);
 
-			// check in config
-			var config = Config.Load();
-			if (config.Has(new[] { "servers", address, "gateway" })) {
-				var uri = config.Get<string>(new[] { "servers", address, "gateway" });
-				if (uri != null) {
-					Logger.LogDebug($"FindGatewayMaster: config {address} => {uri}");
-					return new Uri(uri);
-				}
-			}
-
-			// check with dns
+		/// <summary>
+		/// Discovers the API gateway for the given server address.
+		/// Tries four strategies in order, returning on first success:
+		///   1. DNS SRV  — _nox._tcp.&lt;address&gt;
+		///   2. DNS TXT  — _nox.&lt;address&gt;, record contains ng=&lt;url&gt;
+		///   3. NodeInfo — /.well-known/nodeinfo, link rel="nox/1.0"
+		///   4. Manual   — /.well-known/nox directly (https then http)
+		/// </summary>
+		public static async UniTask<DiscoveredGateway> Discover(string address)
+		{
+			if (string.IsNullOrEmpty(address)) return null;
 			var t0 = DateTime.Now;
-
-			var host    = address.Split(':');
-			var uriType = Uri.CheckHostName(host[0]);
-			if (uriType is UriHostNameType.IPv4 or UriHostNameType.IPv6) {
-				Logger.LogDebug($"FindGatewayMaster: IPv4/IPv6 {address}");
-				var uri = new Uri($"tcp://{address}");
-				if (uri.Port == -1)
-					uri = new Uri($"tcp://{address}:{DEFAULT_PORT_MASTER}");
-				var fmg = await FindGm($"{uri.Host}:{uri.Port}", true);
-				return Debugger(fmg != null ? fmg : null);
-			}
-
-			if (host[0] == "localhost") {
-				Logger.LogDebug($"FindGatewayMaster: localhost {address}");
-				var uri = new Uri($"tcp://{address}");
-				if (uri.Port == -1)
-					uri = new Uri($"tcp://{address}:{DEFAULT_PORT_MASTER}");
-				var fmg = await FindGm($"{uri.Host}:{uri.Port}", true);
-				return Debugger(fmg != null ? fmg : null);
-			}
-
-			if (uriType == UriHostNameType.Dns) {
-				Logger.LogDebug($"FindGatewayMaster: DNS {address}");
-				var uri = new Uri($"tcp://{address}");
-				if (uri.Port == -1)
-					uri = new Uri($"tcp://{address}:{DEFAULT_PORT_MASTER}");
-				
-				var uris = await ResolveMasterDns(uri.Host);
-				Uri fmg;
-				
-				if (uris.Length > 0) 
-					foreach (var u in uris) {
-						fmg = await FindGm($"{u.Host}:{u.Port}");
-						if (fmg == null)
-							continue;
-						Logger.LogDebug($"{fmg.Host}:{fmg.Port} (DNS)");
-						return Debugger(fmg);
-					}
-
-				fmg = await FindGm($"{uri.Host}:{uri.Port}");
-				
-				if (fmg != null) {
-					Logger.LogDebug($"{fmg.Host}:{fmg.Port} (DNS)");
-					return Debugger(fmg);
-				}
-			}
-
-			return null;
-
-			Uri Debugger(Uri uri) {
-				var t1 = DateTime.Now - t0;
-				Logger.LogDebug($"FindGatewayMaster: {address} => {uri} ({t1.TotalSeconds:0.00}s)");
-				return uri;
-			}
+			var result =
+				await DiscoverViaSrv(address) ??
+				await DiscoverViaTxt(address) ??
+				await DiscoverViaNodeInfo(address) ??
+				await DiscoverManual(address);
+			Logger.LogDebug($"NodeGateway.Discover: {address} => {result?.GatewayUrl ?? "null"} ({(DateTime.Now - t0).TotalSeconds:0.00}s)");
+			return result;
 		}
 
-		private static async UniTask<Uri[]> ResolveMasterDns(string domain) {
-			Logger.LogDebug($"ResolveMasterDns: domain {domain}");
-			List<Uri> uris = new();
-			var       url  = $"https://dns.google/resolve?name=_nox.{domain}&type=TXT";
-			try {
+		// Strategy 1 — DNS SRV: _nox._tcp.<address>
+		private static async UniTask<DiscoveredGateway> DiscoverViaSrv(string address)
+		{
+			var host = GetHost(address);
+			try
+			{
 				var req = new UnityWebRequest(
-					url,
-					UnityWebRequest.kHttpVerbGET
-				) { downloadHandler = new DownloadHandlerBuffer() };
+					$"https://dns.google/resolve?name=_nox._tcp.{host}&type=SRV",
+					UnityWebRequest.kHttpVerbGET)
+				{ downloadHandler = new DownloadHandlerBuffer() };
 				req.timeout = 5;
 				await req.SendWebRequest();
+				if (req.result != UnityWebRequest.Result.Success) return null;
 
-				if (req.result == UnityWebRequest.Result.Success) {
-					var txt = JsonUtility.FromJson<Txt>(req.downloadHandler.text);
-					if (txt.Status != 0 || txt.Answer.Length <= 0)
-						return uris.ToArray();
+				var dns = JsonUtility.FromJson<Txt>(req.downloadHandler.text);
+				if (dns == null || dns.Status != 0 || dns.Answer == null || dns.Answer.Length == 0) return null;
 
-					foreach (var answer in txt.Answer)
-						if (answer.TryGet("mg", out var gateway)) {
-							var uri = new Uri(gateway);
-							uris.Add(uri);
-						}
-
-					return uris.ToArray();
+				// SRV data format: "<priority> <weight> <port> <target>"
+				var records = new List<SrvRecord>();
+				foreach (var answer in dns.Answer)
+				{
+					var parts = answer.data.Trim('"').Split(' ');
+					if (parts.Length < 4
+						|| !int.TryParse(parts[0], out var priority)
+						|| !int.TryParse(parts[1], out var weight)
+						|| !int.TryParse(parts[2], out var port))
+						continue;
+					records.Add(new SrvRecord
+					{
+						Priority = priority,
+						Weight = weight,
+						Port = port,
+						Target = parts[3].TrimEnd('.')
+					});
 				}
-			} catch {
-				// ignored
-			}
 
-			return uris.ToArray();
+				// Sort by priority↑ then weight↓
+				records.Sort((a, b) => a.Priority != b.Priority ? a.Priority - b.Priority : b.Weight - a.Weight);
+
+				foreach (var r in records)
+					foreach (var scheme in new[] { "https", "http" })
+					{
+						var discovered = await TryFetchWellKnown($"{scheme}://{r.Target}:{r.Port}{WellKnownPath}");
+						if (discovered != null) return discovered;
+					}
+			}
+			catch { /* ignored */ }
+			return null;
 		}
 
-		private static async UniTask<Uri> FindGm(string domain, bool forceHttp = false) {
-			var protos = forceHttp ? new[] { "http" } : new[] { "https", "http" };
-			foreach (var protocol in protos)
-				try {
-					Logger.LogDebug($"FindGm: try {protocol}://{domain}");
-					var uri = new Uri($"{protocol}://{domain}/.well-known/nox");
-					var req = new UnityWebRequest(uri, UnityWebRequest.kHttpVerbGET)
-						{ downloadHandler = new DownloadHandlerBuffer() };
+		// Strategy 2 — DNS TXT: _nox.<address>, looks for ng=<url>
+		private static async UniTask<DiscoveredGateway> DiscoverViaTxt(string address)
+		{
+			var host = GetHost(address);
+			try
+			{
+				var req = new UnityWebRequest(
+					$"https://dns.google/resolve?name=_nox.{host}&type=TXT",
+					UnityWebRequest.kHttpVerbGET)
+				{ downloadHandler = new DownloadHandlerBuffer() };
+				req.timeout = 5;
+				await req.SendWebRequest();
+				if (req.result != UnityWebRequest.Result.Success) return null;
+
+				var dns = JsonUtility.FromJson<Txt>(req.downloadHandler.text);
+				if (dns == null || dns.Status != 0 || dns.Answer == null || dns.Answer.Length == 0) return null;
+
+				foreach (var answer in dns.Answer)
+				{
+					var line = answer.data.Trim('"');
+					var match = Regex.Match(line, @"(?:^|[;\s])ng=([^\s;]+)");
+					if (!match.Success) continue;
+					var discovered = await TryFetchWellKnown(match.Groups[1].Value);
+					if (discovered != null) return discovered;
+				}
+			}
+			catch { /* ignored */ }
+			return null;
+		}
+
+		// Strategy 3 — NodeInfo: /.well-known/nodeinfo, follow link rel="nox/1.0"
+		private static async UniTask<DiscoveredGateway> DiscoverViaNodeInfo(string address)
+		{
+			foreach (var scheme in new[] { "https", "http" })
+				try
+				{
+					var req = new UnityWebRequest(
+						$"{scheme}://{address}{NodeInfoPath}",
+						UnityWebRequest.kHttpVerbGET)
+					{ downloadHandler = new DownloadHandlerBuffer() };
 					req.timeout = 5;
 					await req.SendWebRequest();
-					if (req.result == UnityWebRequest.Result.Success)
-						return new Uri($"{protocol}://{domain}");
-				} catch {
-					// ignored
-				}
+					if (req.result != UnityWebRequest.Result.Success) continue;
 
+					var doc = JsonUtility.FromJson<NodeInfoLinks>(req.downloadHandler.text);
+					if (doc?.links == null) continue;
+
+					var link = doc.links.FirstOrDefault(l => l.rel == NoxNodeInfoRel);
+					if (string.IsNullOrEmpty(link?.href)) continue;
+
+					var discovered = await TryFetchWellKnown(link.href);
+					if (discovered != null) return discovered;
+				}
+				catch { /* ignored */ }
 			return null;
+		}
+
+		// Strategy 4 — Manual: /.well-known/nox directly (https then http)
+		private static async UniTask<DiscoveredGateway> DiscoverManual(string address)
+		{
+			foreach (var scheme in new[] { "https", "http" })
+			{
+				var discovered = await TryFetchWellKnown($"{scheme}://{address}{WellKnownPath}");
+				if (discovered != null) return discovered;
+			}
+			return null;
+		}
+
+		/// <summary>
+		/// GETs a /.well-known/nox URL, parses the NoxWellKnown JSON, and reads TTL from response headers.
+		/// </summary>
+		private static async UniTask<DiscoveredGateway> TryFetchWellKnown(string url)
+		{
+			try
+			{
+				Logger.LogDebug($"NodeGateway.TryFetchWellKnown: {url}");
+				var req = new UnityWebRequest(url, UnityWebRequest.kHttpVerbGET)
+				{ downloadHandler = new DownloadHandlerBuffer() };
+				req.timeout = 5;
+				await req.SendWebRequest();
+				if (req.result != UnityWebRequest.Result.Success) return null;
+
+				var wk = JsonConvert.DeserializeObject<NoxWellKnown>(req.downloadHandler.text);
+				if (wk?.gateway == null || !wk.gateway.TryGetValue("api", out var gatewayApi) || string.IsNullOrEmpty(gatewayApi)) return null;
+
+				var ttl = ParseTtl(
+					req.GetResponseHeader("Cache-Control"),
+					req.GetResponseHeader("Expires"));
+				return new DiscoveredGateway { GatewayUrl = gatewayApi, ExpiresAt = DateTime.UtcNow + ttl, WellKnown = wk };
+			}
+			catch
+			{
+				return null;
+			}
+		}
+
+		private static TimeSpan ParseTtl(string cacheControl, string expires)
+		{
+			if (!string.IsNullOrEmpty(cacheControl))
+			{
+				var m = Regex.Match(cacheControl, @"max-age=(\d+)");
+				if (m.Success && int.TryParse(m.Groups[1].Value, out var s) && s > 0)
+					return TimeSpan.FromSeconds(s);
+			}
+			if (!string.IsNullOrEmpty(expires) && DateTime.TryParse(expires, out var exp))
+			{
+				var ttl = exp.ToUniversalTime() - DateTime.UtcNow;
+				if (ttl > TimeSpan.Zero) return ttl;
+			}
+			return FallbackTtl;
+		}
+
+		/// <summary>Extracts the pure hostname from an address that may include a port.</summary>
+		private static string GetHost(string address)
+			=> Uri.TryCreate($"https://{address}", UriKind.Absolute, out var uri) ? uri.Host : address;
+
+		private struct SrvRecord
+		{
+			public int Priority, Weight, Port;
+			public string Target;
 		}
 	}
 
 	[Serializable]
-	public class Txt {
+	public class NoxWellKnown
+	{
+		public string id;
+		public NoxSoftware software;
+		public string status;
+		public double started;
+		[JsonProperty("public")]
+		public string publicKey;
+		public string address;
+		public int port;
+		[NonSerialized]
+		public Dictionary<string, string> gateway;
+		[NonSerialized]
+		public Dictionary<string, string> endpoints;
+		[NonSerialized]
+		public Dictionary<string, string> versions;
+		public NoxMetadata metadata;
+		public string[] features;
+		public string[] capabilities;
+		public string maintenance;
+	}
+
+	[Serializable]
+	public class NoxSoftware
+	{
+		public string name;
+		public string version;
+	}
+
+	[Serializable]
+	public class NoxEndpoints
+	{
+		public string wellknown;
+		public string webfinger;
+		public string nodeinfo;
+	}
+
+	[Serializable]
+	public class NoxMetadata
+	{
+		public string title;
+		public string description;
+		public string icon;
+		public string contact;
+	}
+
+	[Serializable]
+	public class NodeInfoLinks
+	{
+		public NodeInfoLink[] links;
+	}
+
+	[Serializable]
+	public class NodeInfoLink
+	{
+		public string rel;
+		public string href;
+	}
+
+	// Kept for backward compatibility
+	[Serializable]
+	public class Txt
+	{
 		public int Status;
 		public TxtAnswer[] Answer;
 	}
 
 	[Serializable]
-	public class TxtAnswer {
+	public class TxtAnswer
+	{
 		public string data;
 
 		public Dictionary<string, string> ToDataDictionary()

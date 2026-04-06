@@ -9,13 +9,13 @@ namespace Nox.CCK.Network {
 		private string message;
 
 		[JsonProperty("code")]
-		private uint code;
+		private string code;
 
 		[JsonProperty("status")]
 		private ushort status;
 
 		[JsonIgnore]
-		public uint Code
+		public string Code
 			=> code;
 
 		[JsonIgnore]

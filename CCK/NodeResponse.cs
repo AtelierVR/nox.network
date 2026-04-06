@@ -16,7 +16,7 @@ namespace Nox.CCK.Network {
 			=> error;
 
 		public bool HasError()
-			=> error is { Status: > 0 } or { Code: > 0 };
+			=> error != null && !string.IsNullOrEmpty(error.Code);
 
 		[JsonIgnore]
 		public T Data
