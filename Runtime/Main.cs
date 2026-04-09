@@ -28,6 +28,7 @@ namespace Nox.Network.Runtime {
 			RequestExtension.OnCreated.AddListener(OnBeforeRequest);
 		}
 		private void OnBeforeRequest(Request arg0) {
+			if (coreAPI == null) return;
 			var headers = new Dictionary<string, string>();
 
 			var builder = new StringBuilder();
@@ -98,6 +99,7 @@ namespace Nox.Network.Runtime {
 		#endif
 
 		public void OnDispose() {
+			RequestExtension.OnCreated.RemoveListener(OnBeforeRequest);
 			coreAPI = null;
 			_instance = null;
 		}

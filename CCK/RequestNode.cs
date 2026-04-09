@@ -23,8 +23,11 @@ namespace Nox.CCK.Network {
 		/// <returns></returns>
 		/// <exception cref="Exception"></exception>
 		public static async UniTask<UnityWebRequest> To(string address, string path) {
+			if (string.IsNullOrEmpty(address))
+				return null;
 			var gateway = await NodeDiscover.GetGateway(address);
-			if (string.IsNullOrEmpty(gateway)) return null;
+			if (string.IsNullOrEmpty(gateway))
+				return null;
 			var req = RequestExtension.To(RequestExtension.MergeUrl(gateway, path));
 			req.downloadHandler = new DownloadHandlerBuffer();
 			var token = Config.Load().Get<string>(new[] { "servers", address, "_token" });
