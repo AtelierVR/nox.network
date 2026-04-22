@@ -16,16 +16,14 @@ namespace Nox.CCK.Network {
 
 			// Run the four-strategy discovery pipeline
 			var discovered = await NodeGateway.Discover(server);
-			if (discovered != null) {
-				Cache[server] = discovered;
-				var config = Config.Load();
-				config.Set(new[] { "servers", server, "gateway" }, discovered.GatewayUrl);
-				config.Save();
-				return discovered.GatewayUrl;
-			}
-
-			// Discovery failed — fall back to any previously persisted config value
-			return Config.Load().Get<string>(new[] { "servers", server, "gateway" });
+			if (discovered == null)
+				return Config.Load().Get<string>(new[] { "servers", server, "gateway" });
+			
+			Cache[server] = discovered;
+			var config = Config.Load();
+			config.Set(new[] { "servers", server, "gateway" }, discovered.GatewayUrl);
+			config.Save();
+			return discovered.GatewayUrl;
 		}
 
 		/// <summary>

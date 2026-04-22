@@ -149,7 +149,7 @@ namespace Nox.CCK.Network {
 				return true;
 			} catch (Exception ex) {
 				Logger.LogError(new Exception(
-					$"Request to {request.method} {request.url} failed with exception: {request.result} - {request.error}",
+					$"Request to {request.method} {request.url} failed with exception:\n{request.result} - {request.error}",
 					ex
 				));
 				return false;
