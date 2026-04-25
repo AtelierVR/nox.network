@@ -295,9 +295,13 @@ namespace Nox.CCK.Network {
 	public class NoxMetadata {
 		[JsonConverter(typeof(TranslatedStringConverter))]
 		public TranslatedString title;
+
 		[JsonConverter(typeof(TranslatedStringConverter))]
 		public TranslatedString description;
-		public string icon;
+
+		[JsonConverter(typeof(DictionnaryOrStringConverter), true)]
+		public DictionnaryOrString icon;
+
 		public string contact;
 	}
 
