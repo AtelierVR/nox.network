@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 776389e82c640c44086d3baf10dd1c7b, type: 3}
   m_Name: langpack
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: Nox.CCK::Nox.CCK.Language.LanguagePack
   languages:
   - IETF: fr-FR
     entries:
