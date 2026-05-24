@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using Nox.CCK.Events;
 using Nox.CCK.Utils;
 using UnityEngine.Networking;
+using static Nox.CCK.Network.RequestExtension;
 
 namespace Nox.CCK.Network {
 	/// <summary>
@@ -22,13 +23,13 @@ namespace Nox.CCK.Network {
 		/// <param name="path"></param>
 		/// <returns></returns>
 		/// <exception cref="Exception"></exception>
-		public static async UniTask<UnityWebRequest> To(string address, string path) {
+		public static async UniTask<UnityWebRequest> To(string address, string path, string method = Method.GET) {
 			if (string.IsNullOrEmpty(address))
 				return null;
 			var gateway = await NodeDiscover.GetGateway(address);
 			if (string.IsNullOrEmpty(gateway))
 				return null;
-			var req = RequestExtension.To(RequestExtension.MergeUrl(gateway, path));
+			var req = RequestExtension.To(MergeUrl(gateway, path), method);
 			req.downloadHandler = new DownloadHandlerBuffer();
 			var token = Config.Load().Get<string>(new[] { "servers", address, "_token" });
 			if (!string.IsNullOrEmpty(token))

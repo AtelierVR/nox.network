@@ -64,8 +64,8 @@ namespace Nox.CCK.Network {
 		public static readonly NoxEventAsync<UnityWebRequest> OnBeforeSend = new();
 		public static readonly NoxEventAsync<UnityWebRequest> OnCompleted = new();
 
-		public static Request To(string url) {
-			var req = new Request(url) { method = Method.GET, downloadHandler = new DownloadHandlerBuffer() };
+		public static Request To(string url, string method = Method.GET) {
+			var req = new Request(url) { method = method, downloadHandler = new DownloadHandlerBuffer() };
 			OnCreated.Invoke(req);
 			return req;
 		}
@@ -193,11 +193,23 @@ namespace Nox.CCK.Network {
 			return request.downloadHandler.text;
 		}
 
-		public static async UniTask<T> Json<T>(this UnityWebRequest request, CancellationToken token = default)
-			=> JsonConvert.DeserializeObject<T>(await request.Text(token));
+		public static async UniTask<T> Json<T>(this UnityWebRequest request, CancellationToken token = default) {
+			var text = await request.Text(token);
+			// Deserialize on a ThreadPool thread to avoid blocking the main thread
+			// (Newtonsoft JSON on large payloads can take 50-100ms)
+			await UniTask.SwitchToThreadPool();
+			var result = JsonConvert.DeserializeObject<T>(text);
+			await UniTask.SwitchToMainThread(cancellationToken: token);
+			return result;
+		}
 
-		public static async UniTask<JToken> Json(this UnityWebRequest request, CancellationToken token = default)
-			=> JToken.Parse(await request.Text(token));
+		public static async UniTask<JToken> Json(this UnityWebRequest request, CancellationToken token = default) {
+			var text = await request.Text(token);
+			await UniTask.SwitchToThreadPool();
+			var result = JToken.Parse(text);
+			await UniTask.SwitchToMainThread(cancellationToken: token);
+			return result;
+		}
 
 		public static async UniTask<byte[]> Data(this UnityWebRequest request, CancellationToken token = default) {
 			if (request.downloadHandler == null)
