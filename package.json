@@ -1,5 +1,6 @@
-{
-  "name": "nox.network",
-  "displayName": "Nox - Network",
-  "version": "1.0.0"
+﻿{
+    "name":  "nox.network",
+    "displayName":  "Nox - Network",
+    "version":  "1.0.0",
+    "description":  "Core networking layer providing transport, messaging, and connection management."
 }
