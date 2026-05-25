@@ -23,8 +23,6 @@
       "website": "https://hactazia.fr/"
     }
   ],
-  "contributors": [],
-  "relations": [ ],
   "entrypoints": {
     "main": [
       "Nox.Network.Runtime.Main"
