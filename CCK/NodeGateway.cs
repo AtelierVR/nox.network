@@ -202,9 +202,7 @@ namespace Nox.CCK.Network {
 
 				Logger.LogDebug($"NodeGateway.WellKnown: body — {req.downloadHandler.text}");
 				var rawText = req.downloadHandler.text;
-				await UniTask.SwitchToThreadPool();
 				var wk = JsonConvert.DeserializeObject<NoxWellKnown>(rawText);
-				await UniTask.SwitchToMainThread();
 				if (wk == null) {
 					Logger.LogDebug("NodeGateway.WellKnown: deserialization returned null");
 					return null;
