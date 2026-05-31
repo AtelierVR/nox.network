@@ -40,7 +40,6 @@ namespace Nox.CCK.Network {
 				await DiscoverViaTxt(address) ??
 				await DiscoverViaNodeInfo(address) ??
 				await DiscoverManual(address);
-			Logger.LogDebug($"NodeGateway.Discover: {address} => {result?.GatewayUrl ?? "null"} ({(DateTime.Now - t0).TotalSeconds:0.00}s)");
 			return result;
 		}
 
@@ -49,22 +48,16 @@ namespace Nox.CCK.Network {
 			var host = GetHost(address);
 			try {
 				var dnsUrl = $"https://dns.google/resolve?name=_nox._tcp.{host}&type=SRV";
-				Logger.LogDebug($"NodeGateway.SRV: querying {dnsUrl}");
 				var req = new UnityWebRequest(dnsUrl, UnityWebRequest.kHttpVerbGET)
 					{ downloadHandler = new DownloadHandlerBuffer() };
 				req.timeout = 5;
 				await req.SendWebRequest();
-				if (req.result != UnityWebRequest.Result.Success) {
-					Logger.LogDebug($"NodeGateway.SRV: DNS request failed — {req.error}");
+				if (req.result != UnityWebRequest.Result.Success) 
 					return null;
-				}
 
-				Logger.LogDebug($"NodeGateway.SRV: response — {req.downloadHandler.text}");
 				var dns = JsonUtility.FromJson<Txt>(req.downloadHandler.text);
-				if (dns is not { Status: 0 } || dns.Answer == null || dns.Answer.Length == 0) {
-					Logger.LogDebug($"NodeGateway.SRV: no usable records (status={dns?.Status}, answers={dns?.Answer?.Length ?? 0})");
+				if (dns is not { Status: 0 } || dns.Answer == null || dns.Answer.Length == 0) 
 					return null;
-				}
 
 				// SRV data format: "<priority> <weight> <port> <target>"
 				var records = new List<SrvRecord>();
@@ -92,9 +85,10 @@ namespace Nox.CCK.Network {
 					if (discovered != null)
 						return discovered;
 				}
-			} catch (Exception ex) { Logger.LogDebug($"NodeGateway.SRV: exception — {ex.Message}"); }
+			} catch (Exception ex) { 
+				Logger.LogWarning($"NodeGateway.SRV: exception — {ex.Message}");
+			}
 
-			Logger.LogDebug("NodeGateway.SRV: no valid SRV records found");
 			return null;
 		}
 
@@ -103,39 +97,30 @@ namespace Nox.CCK.Network {
 			var host = GetHost(address);
 			try {
 				var dnsUrl = $"https://dns.google/resolve?name=_nox.{host}&type=TXT";
-				Logger.LogDebug($"NodeGateway.TXT: querying {dnsUrl}");
 				var req = new UnityWebRequest(dnsUrl, UnityWebRequest.kHttpVerbGET)
 					{ downloadHandler = new DownloadHandlerBuffer() };
 				req.timeout = 5;
 				await req.SendWebRequest();
-				if (req.result != UnityWebRequest.Result.Success) {
-					Logger.LogDebug($"NodeGateway.TXT: DNS request failed — {req.error}");
+				if (req.result != UnityWebRequest.Result.Success) 
 					return null;
-				}
 
-				Logger.LogDebug($"NodeGateway.TXT: response — {req.downloadHandler.text}");
 				var dns = JsonUtility.FromJson<Txt>(req.downloadHandler.text);
-				if (dns is not { Status: 0 } || dns.Answer == null || dns.Answer.Length == 0) {
-					Logger.LogDebug($"NodeGateway.TXT: no usable records (status={dns?.Status}, answers={dns?.Answer?.Length ?? 0})");
+				if (dns is not { Status: 0 } || dns.Answer == null || dns.Answer.Length == 0) 
 					return null;
-				}
 
 				foreach (var answer in dns.Answer) {
 					var line = answer.data.Trim('"');
-					Logger.LogDebug($"NodeGateway.TXT: record — {line}");
 					var match = Regex.Match(line, @"(?:^|[;\s])ng=([^\s;]+)");
-					if (!match.Success) {
-						Logger.LogDebug($"NodeGateway.TXT: no ng= in record");
+					if (!match.Success)
 						continue;
-					}
-					Logger.LogDebug($"NodeGateway.TXT: found ng={match.Groups[1].Value}");
 					var discovered = await TryFetchWellKnown(match.Groups[1].Value);
 					if (discovered != null)
 						return discovered;
 				}
-			} catch (Exception ex) { Logger.LogDebug($"NodeGateway.TXT: exception — {ex.Message}"); }
+			} catch (Exception ex) { 
+				Logger.LogWarning($"NodeGateway.TXT: exception — {ex.Message}");
+			}
 
-			Logger.LogDebug("NodeGateway.TXT: no valid ng= record found in any TXT answer");
 			return null;
 		}
 
@@ -144,34 +129,24 @@ namespace Nox.CCK.Network {
 			foreach (var scheme in new[] { "https", "http" })
 				try {
 					var nodeUrl = $"{scheme}://{address}{NodeInfoPath}";
-					Logger.LogDebug($"NodeGateway.NodeInfo: querying {nodeUrl}");
 					var req = new UnityWebRequest(nodeUrl, UnityWebRequest.kHttpVerbGET)
 						{ downloadHandler = new DownloadHandlerBuffer(), certificateHandler = new AcceptAllCertificates() };
 					req.timeout = 5;
 					await req.SendWebRequest();
-					if (req.result != UnityWebRequest.Result.Success) {
-						Logger.LogDebug($"NodeGateway.NodeInfo: failed — {req.error}");
+					if (req.result != UnityWebRequest.Result.Success) 
 						continue;
-					}
-
-					Logger.LogDebug($"NodeGateway.NodeInfo: response — {req.downloadHandler.text}");
 					var doc = JsonUtility.FromJson<NodeInfoLinks>(req.downloadHandler.text);
-					if (doc?.links == null) {
-						Logger.LogDebug("NodeGateway.NodeInfo: no links in response");
+					if (doc?.links == null) 
 						continue;
-					}
-
 					var link = doc.links.FirstOrDefault(l => l.rel == NoxNodeInfoRel);
-					if (string.IsNullOrEmpty(link?.href)) {
-						Logger.LogDebug($"NodeGateway.NodeInfo: no link with rel={NoxNodeInfoRel}");
+					if (string.IsNullOrEmpty(link?.href)) 
 						continue;
-					}
-
-					Logger.LogDebug($"NodeGateway.NodeInfo: found href={link.href}");
 					var discovered = await TryFetchWellKnown(link.href);
 					if (discovered != null)
 						return discovered;
-				} catch (Exception ex) { Logger.LogDebug($"NodeGateway.NodeInfo: exception — {ex.Message}"); }
+				} catch (Exception ex) { 
+					Logger.LogWarning($"NodeGateway.NodeInfo: exception — {ex.Message}"); 
+				}
 			return null;
 		}
 
@@ -190,43 +165,30 @@ namespace Nox.CCK.Network {
 		/// </summary>
 		private static async UniTask<DiscoveredGateway> TryFetchWellKnown(string url) {
 			try {
-				Logger.LogDebug($"NodeGateway.WellKnown: fetching {url}");
 				var req = new UnityWebRequest(url, UnityWebRequest.kHttpVerbGET)
 					{ downloadHandler = new DownloadHandlerBuffer(), certificateHandler = new AcceptAllCertificates() };
 				req.timeout = 5;
 				await req.SendWebRequest();
-				if (req.result != UnityWebRequest.Result.Success) {
-					Logger.LogDebug($"NodeGateway.WellKnown: HTTP failed ({(int)req.responseCode}) — {req.error}");
+				if (req.result != UnityWebRequest.Result.Success) 
 					return null;
-				}
-
-				Logger.LogDebug($"NodeGateway.WellKnown: body — {req.downloadHandler.text}");
 				var rawText = req.downloadHandler.text;
 				var wk = JsonConvert.DeserializeObject<NoxWellKnown>(rawText);
-				if (wk == null) {
-					Logger.LogDebug("NodeGateway.WellKnown: deserialization returned null");
+				if (wk == null)
 					return null;
-				}
-				if (wk.gateway == null) {
-					Logger.LogDebug("NodeGateway.WellKnown: 'gateway' field is null after deserialization");
+				if (wk.gateway == null) 
 					return null;
-				}
-				if (!wk.gateway.TryGetValue("api", out var gatewayApi) || string.IsNullOrEmpty(gatewayApi)) {
-					Logger.LogDebug($"NodeGateway.WellKnown: gateway has no 'api' key (keys: [{string.Join(", ", wk.gateway.Keys)}])");
+				if (!wk.gateway.TryGetValue("api", out var gatewayApi) || string.IsNullOrEmpty(gatewayApi)) 
 					return null;
-				}
-
 				var ttl = ParseTtl(
 					req.GetResponseHeader("Cache-Control"),
 					req.GetResponseHeader("Expires"));
-				Logger.LogDebug($"NodeGateway.WellKnown: success — gatewayApi={gatewayApi}, ttl={ttl}");
 				return new DiscoveredGateway {
 					GatewayUrl = gatewayApi,
 					ExpiresAt  = DateTime.UtcNow + ttl,
 					WellKnown  = wk
 				};
 			} catch (Exception ex) {
-				Logger.LogDebug($"NodeGateway.WellKnown: exception — {ex.GetType().Name}: {ex.Message}");
+				Logger.LogWarning($"NodeGateway.WellKnown: exception — {ex.GetType().Name}: {ex.Message}");
 				return null;
 			}
 		}

@@ -18,7 +18,7 @@ namespace Nox.CCK.Network {
 			var discovered = await NodeGateway.Discover(server);
 			if (discovered == null)
 				return Config.Load().Get<string>(new[] { "servers", server, "gateway" });
-			
+
 			Cache[server] = discovered;
 			var config = Config.Load();
 			config.Set(new[] { "servers", server, "gateway" }, discovered.GatewayUrl);
@@ -32,7 +32,7 @@ namespace Nox.CCK.Network {
 		public static async UniTask<NoxWellKnown> GetWellKnown(string server, CancellationToken cancellationToken = default) {
 			if (Cache.TryGetValue(server, out var cached) && cached.ExpiresAt > DateTime.UtcNow)
 				return cached.WellKnown;
-			await GetGateway(server); // populates cache
+			await GetGateway(server).AttachExternalCancellation(cancellationToken); // populates cache
 			return Cache.TryGetValue(server, out var fresh) ? fresh.WellKnown : null;
 		}
 	}
