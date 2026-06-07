@@ -33,7 +33,10 @@ jobs:
     uses: AtelierVR/mod.builder/.github/workflows/build.yml@main
     with:
       version: ${{ needs.version.outputs.resolved }}
-    secrets: inherit
+    secrets:
+      UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
 
   release:
     needs: [ version, build ]
