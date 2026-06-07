@@ -6,7 +6,7 @@
     "network"
   ],
   "name": "Network",
-  "version": "1.0.0",
+  "version": "1.0.x",
   "description": "A networking API for Nox.",
   "license": "GPL-3.0",
   "icon": null,
@@ -27,5 +27,18 @@
     "main": [
       "Nox.Network.Runtime.Main"
     ]
-  }
+  },
+  "registers": {
+    "nox.cck": "git+https://github.com/AtelierVR/nox.cck.git",
+    "nox.loader": "git+https://github.com/AtelierVR/nox.loader.git",
+    "nox.game.builder": "git+https://github.com/AtelierVR/nox.game.builder.git",
+    "nox.users": "git+https://github.com/AtelierVR/api.nox.user.git"
+  },
+  "relations": [
+    {
+      "id": "nox.cck",
+      "type": "depends",
+      "version": ">=1.0.0"
+    }
+  ]
 }
