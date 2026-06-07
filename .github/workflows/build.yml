@@ -25,7 +25,6 @@ jobs:
     uses: AtelierVR/mod.builder/.github/workflows/version.yml@main
     with:
       override: ${{ inputs.version_override }}
-    secrets: inherit
 
   build:
     needs: version
