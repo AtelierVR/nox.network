@@ -32,11 +32,24 @@
     "nox.cck": "git+https://github.com/AtelierVR/nox.cck.git",
     "nox.loader": "git+https://github.com/AtelierVR/nox.loader.git",
     "nox.game.builder": "git+https://github.com/AtelierVR/nox.game.builder.git",
-    "nox.users": "git+https://github.com/AtelierVR/api.nox.user.git"
+    "nox.users": "git+https://github.com/AtelierVR/api.nox.user.git",
+    "nox.jint": "git+https://github.com/AtelierVR/nox.jint.git",
+    "nox.entities": "git+https://github.com/AtelierVR/nox.entities.git",
+    "nox.ui": "git+https://github.com/AtelierVR/nox.ui.git"
   },
   "relations": [
     {
       "id": "nox.cck",
+      "type": "depends",
+      "version": ">=1.0.0"
+    },
+    {
+      "id": "nox.jint",
+      "type": "depends",
+      "version": ">=1.0.0"
+    },
+    {
+      "id": "nox.entities",
       "type": "depends",
       "version": ">=1.0.0"
     }
