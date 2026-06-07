@@ -1,99 +1,99 @@
-{
-  "type": "mod",
-  "id": "nox.network",
-  "provides": [
-    "fr.hactazia.network",
-    "network"
-  ],
-  "name": "Network",
-  "version": "1.0.0",
-  "description": "A networking API for Nox.",
-  "license": "GPL-3.0",
-  "icon": null,
-  "contact": {
-    "email": "hactazia@gmail.com",
-    "source": "https://github.com/AtelierVR/nox.network",
-    "website": "https://nox.hactazia.fr/",
-    "issues": "https://github.com/AtelierVR/nox.network/issues"
-  },
-  "authors": [
-    {
-      "name": "Hactazia",
-      "email": "hactazia@gmail.com",
-      "website": "https://hactazia.fr/"
-    }
-  ],
-  "entrypoints": {
-    "main": [
-      "Nox.Network.Runtime.Main"
-    ]
-  },
-  "registers": {
-    "nox.cck": "git+https://github.com/AtelierVR/nox.cck.git",
-    "com.cysharp.unitask": "git+https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
-    "com.unity.nuget.newtonsoft-json": "upm:3.2.2",
-    "com.unity.modules.unitywebrequest": "upm:1.0.0",
-    "com.unity.modules.unitywebrequestassetbundle": "upm:1.0.0",
-    "com.unity.modules.audio": "upm:1.0.0",
-    "com.unity.modules.assetbundle": "upm:1.0.0",
-    "com.unity.modules.ui": "upm:1.0.0",
-    "com.unity.modules.uielements": "upm:1.0.0",
-    "com.unity.modules.imgui": "upm:1.0.0",
-    "com.unity.modules.jsonserialize": "upm:1.0.0",
-    "com.unity.modules.animation": "upm:1.0.0",
-    "com.unity.modules.physics": "upm:1.0.0",
-    "com.unity.modules.imageconversion": "upm:1.0.0",
-    "com.unity.2d.sprite": "upm:1.0.0",
-    "com.unity.inputsystem": "upm:1.19.0",
-    "com.unity.render-pipelines.universal": "upm:17.5.0",
-    "com.unity.scriptablebuildpipeline": "upm:2.6.1",
-    "com.unity.ugui": "upm:2.0.0"
-  },
-  "relations": [
-    {
-      "id": "nox.cck",
-      "type": "depends",
-      "version": ">=1.0.0"
-    },
-    {
-      "id": "com.cysharp.unitask",
-      "type": "depends",
-      "version": ">=2.0.0"
-    },
-    {
-      "id": "com.unity.nuget.newtonsoft-json",
-      "type": "depends",
-      "version": ">=3.0.0"
-    },
-    {
-      "id": "com.unity.modules.unitywebrequest",
-      "type": "depends",
-      "version": ">=1.0.0"
-    },
-    {
-      "id": "com.unity.modules.unitywebrequestassetbundle",
-      "type": "depends",
-      "version": ">=1.0.0"
-    },
-    {
-      "id": "com.unity.modules.audio",
-      "type": "depends",
-      "version": ">=1.0.0"
-    },
-    {
-      "id": "com.unity.modules.assetbundle",
-      "type": "depends",
-      "version": ">=1.0.0"
-    },
-    {
-      "id": "com.unity.modules.ui",
-      "type": "depends",
-      "version": ">=1.0.0"
-    },
-    {
-      "id": "com.unity.modules.uielements",
-      "type": "depends",
-      "version": ">=1.0.0"
-    }
-  ]
+﻿{
+    "type":  "mod",
+    "id":  "nox.network",
+    "provides":  [
+                     "fr.hactazia.network",
+                     "network"
+                 ],
+    "name":  "Network",
+    "version":  null,
+    "description":  "A networking API for Nox.",
+    "license":  "GPL-3.0",
+    "icon":  null,
+    "contact":  {
+                    "email":  "hactazia@gmail.com",
+                    "source":  "https://github.com/AtelierVR/nox.network",
+                    "website":  "https://nox.hactazia.fr/",
+                    "issues":  "https://github.com/AtelierVR/nox.network/issues"
+                },
+    "authors":  [
+                    {
+                        "name":  "Hactazia",
+                        "email":  "hactazia@gmail.com",
+                        "website":  "https://hactazia.fr/"
+                    }
+                ],
+    "entrypoints":  {
+                        "main":  [
+                                     "Nox.Network.Runtime.Main"
+                                 ]
+                    },
+    "registers":  {
+                      "nox.cck":  "git+https://github.com/AtelierVR/nox.cck.git",
+                      "com.cysharp.unitask":  "git+https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
+                      "com.unity.nuget.newtonsoft-json":  "upm:3.2.2",
+                      "com.unity.modules.unitywebrequest":  "upm:1.0.0",
+                      "com.unity.modules.unitywebrequestassetbundle":  "upm:1.0.0",
+                      "com.unity.modules.audio":  "upm:1.0.0",
+                      "com.unity.modules.assetbundle":  "upm:1.0.0",
+                      "com.unity.modules.ui":  "upm:1.0.0",
+                      "com.unity.modules.uielements":  "upm:1.0.0",
+                      "com.unity.modules.imgui":  "upm:1.0.0",
+                      "com.unity.modules.jsonserialize":  "upm:1.0.0",
+                      "com.unity.modules.animation":  "upm:1.0.0",
+                      "com.unity.modules.physics":  "upm:1.0.0",
+                      "com.unity.modules.imageconversion":  "upm:1.0.0",
+                      "com.unity.2d.sprite":  "upm:1.0.0",
+                      "com.unity.inputsystem":  "upm:1.19.0",
+                      "com.unity.render-pipelines.universal":  "upm:17.5.0",
+                      "com.unity.scriptablebuildpipeline":  "upm:2.6.1",
+                      "com.unity.ugui":  "upm:2.0.0"
+                  },
+    "relations":  [
+                      {
+                          "id":  "nox.cck",
+                          "type":  "depends",
+                          "version":  "\u003e=1.0.0"
+                      },
+                      {
+                          "id":  "com.cysharp.unitask",
+                          "type":  "depends",
+                          "version":  "\u003e=2.0.0"
+                      },
+                      {
+                          "id":  "com.unity.nuget.newtonsoft-json",
+                          "type":  "depends",
+                          "version":  "\u003e=3.0.0"
+                      },
+                      {
+                          "id":  "com.unity.modules.unitywebrequest",
+                          "type":  "depends",
+                          "version":  "\u003e=1.0.0"
+                      },
+                      {
+                          "id":  "com.unity.modules.unitywebrequestassetbundle",
+                          "type":  "depends",
+                          "version":  "\u003e=1.0.0"
+                      },
+                      {
+                          "id":  "com.unity.modules.audio",
+                          "type":  "depends",
+                          "version":  "\u003e=1.0.0"
+                      },
+                      {
+                          "id":  "com.unity.modules.assetbundle",
+                          "type":  "depends",
+                          "version":  "\u003e=1.0.0"
+                      },
+                      {
+                          "id":  "com.unity.modules.ui",
+                          "type":  "depends",
+                          "version":  "\u003e=1.0.0"
+                      },
+                      {
+                          "id":  "com.unity.modules.uielements",
+                          "type":  "depends",
+                          "version":  "\u003e=1.0.0"
+                      }
+                  ]
 }
