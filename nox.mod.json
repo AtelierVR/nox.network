@@ -20,11 +20,11 @@
   "relations": [
     { "id": "nox.cck", "type": "depends", "version": ">=1.0.0", "register": "git+https://github.com/AtelierVR/nox.cck.git" },
     { "id": "com.cysharp.unitask", "type": "depends", "version": ">=2.0.0", "register": "git+https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask" },
-    { "id": "com.unity.modules.unitywebrequest", "type": "depends", "version": ">=1.0.0", "register": "upm+:com.unity.modules.unitywebrequest@1.0.0" },
-    { "id": "com.unity.modules.unitywebrequestassetbundle", "type": "depends", "version": ">=1.0.0", "register": "upm+:com.unity.modules.unitywebrequest@1.0.0" },
-    { "id": "com.unity.modules.unitywebrequesttexture", "type": "depends", "version": ">=1.0.0", "register": "upm+:com.unity.modules.unitywebrequest@1.0.0" },
-    { "id": "com.unity.modules.unitywebrequestaudio", "type": "depends", "version": ">=1.0.0", "register": "upm+:com.unity.modules.unitywebrequest@1.0.0" },
-    { "id": "com.unity.modules.jsonserialize", "type": "depends", "version": ">=1.0.0", "register": "upm+:com.unity.modules.unitywebrequest@1.0.0" },
+    { "id": "com.unity.modules.unitywebrequest", "type": "depends", "version": ">=1.0.0", "register": "upm+com.unity.modules.unitywebrequest@1.0.0" },
+    { "id": "com.unity.modules.unitywebrequestassetbundle", "type": "depends", "version": ">=1.0.0", "register": "upm+com.unity.modules.unitywebrequest@1.0.0" },
+    { "id": "com.unity.modules.unitywebrequesttexture", "type": "depends", "version": ">=1.0.0", "register": "upm+com.unity.modules.unitywebrequest@1.0.0" },
+    { "id": "com.unity.modules.unitywebrequestaudio", "type": "depends", "version": ">=1.0.0", "register": "upm+com.unity.modules.unitywebrequest@1.0.0" },
+    { "id": "com.unity.modules.jsonserialize", "type": "depends", "version": ">=1.0.0", "register": "upm+com.unity.modules.unitywebrequest@1.0.0" },
     { "id": "nox.users", "type": "depends", "version": ">=1.0.0", "register": "git+https://github.com/AtelierVR/nox.users.git" }
   ]
 }
