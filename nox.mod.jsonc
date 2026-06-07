@@ -1,12 +1,9 @@
-{
+﻿{
   "type": "mod",
   "id": "nox.network",
-  "provides": [
-    "fr.hactazia.network",
-    "network"
-  ],
+  "provides": ["fr.hactazia.network", "network"],
   "name": "Network",
-  "version": "1.0.0",
+  "version": "1.0.x",
   "description": "A networking API for Nox.",
   "license": "GPL-3.0",
   "icon": null,
@@ -16,62 +13,18 @@
     "website": "https://nox.hactazia.fr/",
     "issues": "https://github.com/AtelierVR/nox.network/issues"
   },
-  "authors": [
-    {
-      "name": "Hactazia",
-      "email": "hactazia@gmail.com",
-      "website": "https://hactazia.fr/"
-    }
-  ],
+  "authors": [{ "name": "Hactazia", "email": "hactazia@gmail.com", "website": "https://hactazia.fr/" }],
   "entrypoints": {
-    "main": [
-      "Nox.Network.Runtime.Main"
-    ]
-  },
-  "registers": {
-    "nox.cck": "git+https://github.com/AtelierVR/nox.cck.git",
-    "com.cysharp.unitask": "git+https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
-    "com.unity.modules.unitywebrequest": "upm:1.0.0",
-    "com.unity.modules.unitywebrequestassetbundle": "upm:1.0.0",
-    "com.unity.modules.unitywebrequesttexture": "upm:1.0.0",
-    "com.unity.modules.unitywebrequestaudio": "upm:1.0.0",
-    "com.unity.modules.jsonserialize": "upm:1.0.0"
+    "main": ["Nox.Network.Runtime.Main"]
   },
   "relations": [
-    {
-      "id": "nox.cck",
-      "type": "depends",
-      "version": ">=1.0.0"
-    },
-    {
-      "id": "com.cysharp.unitask",
-      "type": "depends",
-      "version": ">=2.0.0"
-    },
-    {
-      "id": "com.unity.modules.unitywebrequest",
-      "type": "depends",
-      "version": ">=1.0.0"
-    },
-    {
-      "id": "com.unity.modules.unitywebrequestassetbundle",
-      "type": "depends",
-      "version": ">=1.0.0"
-    },
-    {
-      "id": "com.unity.modules.unitywebrequesttexture",
-      "type": "depends",
-      "version": ">=1.0.0"
-    },
-    {
-      "id": "com.unity.modules.unitywebrequestaudio",
-      "type": "depends",
-      "version": ">=1.0.0"
-    },
-    {
-      "id": "com.unity.modules.jsonserialize",
-      "type": "depends",
-      "version": ">=1.0.0"
-    }
+    { "id": "nox.cck", "type": "depends", "version": ">=1.0.0", "register": "git+https://github.com/AtelierVR/nox.cck.git" },
+    { "id": "com.cysharp.unitask", "type": "depends", "version": ">=2.0.0", "register": "git+https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask" },
+    { "id": "com.unity.modules.unitywebrequest", "type": "depends", "version": ">=1.0.0", "register": "upm:1.0.0" },
+    { "id": "com.unity.modules.unitywebrequestassetbundle", "type": "depends", "version": ">=1.0.0", "register": "upm:1.0.0" },
+    { "id": "com.unity.modules.unitywebrequesttexture", "type": "depends", "version": ">=1.0.0", "register": "upm:1.0.0" },
+    { "id": "com.unity.modules.unitywebrequestaudio", "type": "depends", "version": ">=1.0.0", "register": "upm:1.0.0" },
+    { "id": "com.unity.modules.jsonserialize", "type": "depends", "version": ">=1.0.0", "register": "upm:1.0.0" },
+    { "id": "nox.users", "type": "depends", "version": ">=1.0.0", "register": "git+https://github.com/AtelierVR/api.nox.user.git" }
   ]
 }
