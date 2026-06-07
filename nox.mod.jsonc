@@ -31,7 +31,8 @@
   "registers": {
     "nox.cck": "git+https://github.com/AtelierVR/nox.cck.git",
     "com.cysharp.unitask": "git+https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
-    "com.unity.modules.unitywebrequest": "upm:1.0.0"
+    "com.unity.modules.unitywebrequest": "upm:1.0.0",
+    "com.unity.modules.unitywebrequestassetbundle": "upm:1.0.0"
   },
   "relations": [
     {
@@ -46,6 +47,11 @@
     },
     {
       "id": "com.unity.modules.unitywebrequest",
+      "type": "depends",
+      "version": ">=1.0.0"
+    },
+    {
+      "id": "com.unity.modules.unitywebrequestassetbundle",
       "type": "depends",
       "version": ">=1.0.0"
     }
