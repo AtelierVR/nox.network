@@ -1,9 +1,12 @@
-﻿{
+{
   "type": "mod",
   "id": "nox.network",
-  "provides": ["fr.hactazia.network", "network"],
+  "provides": [
+    "fr.hactazia.network",
+    "network"
+  ],
   "name": "Network",
-  "version": "1.0.x",
+  "version": "1.0.0",
   "description": "A networking API for Nox.",
   "license": "GPL-3.0",
   "icon": null,
@@ -13,9 +16,17 @@
     "website": "https://nox.hactazia.fr/",
     "issues": "https://github.com/AtelierVR/nox.network/issues"
   },
-  "authors": [{ "name": "Hactazia", "email": "hactazia@gmail.com", "website": "https://hactazia.fr/" }],
+  "authors": [
+    {
+      "name": "Hactazia",
+      "email": "hactazia@gmail.com",
+      "website": "https://hactazia.fr/"
+    }
+  ],
   "entrypoints": {
-    "main": ["Nox.Network.Runtime.Main"]
+    "main": [
+      "Nox.Network.Runtime.Main"
+    ]
   },
   "registers": {
     "nox.cck": "git+https://github.com/AtelierVR/nox.cck.git",
@@ -23,8 +34,20 @@
     "com.unity.modules.unitywebrequest": "upm:1.0.0"
   },
   "relations": [
-    { "id": "nox.cck", "type": "depends", "version": ">=1.0.0" },
-    { "id": "com.cysharp.unitask", "type": "depends", "version": ">=2.0.0" },
-    { "id": "com.unity.modules.unitywebrequest", "type": "depends", "version": ">=1.0.0" }
+    {
+      "id": "nox.cck",
+      "type": "depends",
+      "version": ">=1.0.0"
+    },
+    {
+      "id": "com.cysharp.unitask",
+      "type": "depends",
+      "version": ">=2.0.0"
+    },
+    {
+      "id": "com.unity.modules.unitywebrequest",
+      "type": "depends",
+      "version": ">=1.0.0"
+    }
   ]
 }
