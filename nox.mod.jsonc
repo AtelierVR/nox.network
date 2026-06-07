@@ -25,6 +25,6 @@
     { "id": "com.unity.modules.unitywebrequesttexture", "type": "depends", "version": ">=1.0.0", "register": "upm:1.0.0" },
     { "id": "com.unity.modules.unitywebrequestaudio", "type": "depends", "version": ">=1.0.0", "register": "upm:1.0.0" },
     { "id": "com.unity.modules.jsonserialize", "type": "depends", "version": ">=1.0.0", "register": "upm:1.0.0" },
-    { "id": "nox.users", "type": "depends", "version": ">=1.0.0", "register": "git+https://github.com/AtelierVR/api.nox.user.git" }
+    { "id": "nox.users", "type": "depends", "version": ">=1.0.0", "register": "git+https://github.com/AtelierVR/nox.users.git" }
   ]
 }
