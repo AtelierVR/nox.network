@@ -1,12 +1,9 @@
-{
+﻿{
   "type": "mod",
   "id": "nox.network",
-  "provides": [
-    "fr.hactazia.network",
-    "network"
-  ],
+  "provides": ["fr.hactazia.network", "network"],
   "name": "Network",
-  "version": "1.0.0",
+  "version": "1.0.x",
   "description": "A networking API for Nox.",
   "license": "GPL-3.0",
   "icon": null,
@@ -16,38 +13,24 @@
     "website": "https://nox.hactazia.fr/",
     "issues": "https://github.com/AtelierVR/nox.network/issues"
   },
-  "authors": [
-    {
-      "name": "Hactazia",
-      "email": "hactazia@gmail.com",
-      "website": "https://hactazia.fr/"
-    }
-  ],
+  "authors": [{ "name": "Hactazia", "email": "hactazia@gmail.com", "website": "https://hactazia.fr/" }],
   "entrypoints": {
-    "main": [
-      "Nox.Network.Runtime.Main"
-    ]
+    "main": ["Nox.Network.Runtime.Main"]
   },
   "registers": {
     "nox.cck": "git+https://github.com/AtelierVR/nox.cck.git",
     "com.cysharp.unitask": "git+https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
-    "com.unity.modules.unitywebrequest": "upm:1.0.0"
+    "com.unity.nuget.newtonsoft-json": "upm:3.2.2",
+    "com.unity.modules.unitywebrequest": "upm:1.0.0",
+    "com.unity.modules.physics": "upm:1.0.0",
+    "com.unity.textmeshpro": "upm:3.0.0"
   },
   "relations": [
-    {
-      "id": "nox.cck",
-      "type": "depends",
-      "version": ">=1.0.0"
-    },
-    {
-      "id": "com.cysharp.unitask",
-      "type": "depends",
-      "version": ">=2.0.0"
-    },
-    {
-      "id": "com.unity.modules.unitywebrequest",
-      "type": "depends",
-      "version": ">=1.0.0"
-    }
+    { "id": "nox.cck", "type": "depends", "version": ">=1.0.0" },
+    { "id": "com.cysharp.unitask", "type": "depends", "version": ">=2.0.0" },
+    { "id": "com.unity.nuget.newtonsoft-json", "type": "depends", "version": ">=3.0.0" },
+    { "id": "com.unity.modules.unitywebrequest", "type": "depends", "version": ">=1.0.0" },
+    { "id": "com.unity.modules.physics", "type": "depends", "version": ">=1.0.0" },
+    { "id": "com.unity.textmeshpro", "type": "depends", "version": ">=3.0.0" }
   ]
 }
