@@ -12,6 +12,9 @@ on:
         required: false
         type: string
 
+permissions:
+  contents: write
+
 jobs:
   check:
     uses: AtelierVR/mod.builder/.github/workflows/check.yml@main
