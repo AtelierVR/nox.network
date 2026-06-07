@@ -50,14 +50,50 @@
     "com.unity.ugui": "upm:2.0.0"
   },
   "relations": [
-    { "id": "nox.cck", "type": "depends", "version": ">=1.0.0" },
-    { "id": "com.cysharp.unitask", "type": "depends", "version": ">=2.0.0" },
-    { "id": "com.unity.nuget.newtonsoft-json", "type": "depends", "version": ">=3.0.0" },
-    { "id": "com.unity.modules.unitywebrequest", "type": "depends", "version": ">=1.0.0" },
-    { "id": "com.unity.modules.unitywebrequestassetbundle", "type": "depends", "version": ">=1.0.0" },
-    { "id": "com.unity.modules.audio", "type": "depends", "version": ">=1.0.0" },
-    { "id": "com.unity.modules.assetbundle", "type": "depends", "version": ">=1.0.0" },
-    { "id": "com.unity.modules.ui", "type": "depends", "version": ">=1.0.0" },
-    { "id": "com.unity.modules.uielements", "type": "depends", "version": ">=1.0.0" }
+    {
+      "id": "nox.cck",
+      "type": "depends",
+      "version": ">=1.0.0"
+    },
+    {
+      "id": "com.cysharp.unitask",
+      "type": "depends",
+      "version": ">=2.0.0"
+    },
+    {
+      "id": "com.unity.nuget.newtonsoft-json",
+      "type": "depends",
+      "version": ">=3.0.0"
+    },
+    {
+      "id": "com.unity.modules.unitywebrequest",
+      "type": "depends",
+      "version": ">=1.0.0"
+    },
+    {
+      "id": "com.unity.modules.unitywebrequestassetbundle",
+      "type": "depends",
+      "version": ">=1.0.0"
+    },
+    {
+      "id": "com.unity.modules.audio",
+      "type": "depends",
+      "version": ">=1.0.0"
+    },
+    {
+      "id": "com.unity.modules.assetbundle",
+      "type": "depends",
+      "version": ">=1.0.0"
+    },
+    {
+      "id": "com.unity.modules.ui",
+      "type": "depends",
+      "version": ">=1.0.0"
+    },
+    {
+      "id": "com.unity.modules.uielements",
+      "type": "depends",
+      "version": ">=1.0.0"
+    }
   ]
 }
