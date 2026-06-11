@@ -11,6 +11,11 @@ on:
         description: "Override version (empty = auto)"
         required: false
         type: string
+      no_library_cache:
+        description: "Skip restoring the Library cache"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -32,6 +37,7 @@ jobs:
     uses: AtelierVR/mod.builder/.github/workflows/build.yml@main
     with:
       version: ${{ needs.version.outputs.resolved }}
+      noLibraryCache: ${{ inputs.no_library_cache || false }}
     secrets:
       UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
       UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
