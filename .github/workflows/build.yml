@@ -21,22 +21,23 @@ permissions:
   contents: write
 
 jobs:
-  check:
-    uses: AtelierVR/mod.builder/.github/workflows/check.yml@main
-
-  version:
-    needs: check
-    if: github.event_name != 'pull_request'
-    uses: AtelierVR/mod.builder/.github/workflows/version.yml@main
+  prepare:
+    uses: AtelierVR/mod.builder/.github/workflows/prepare.yml@main
     with:
       override: ${{ inputs.version_override }}
 
+  check:
+    needs: prepare
+    uses: AtelierVR/mod.builder/.github/workflows/check.yml@main
+    with:
+      valid: ${{ needs.prepare.outputs.valid }}
+
   build:
-    needs: version
-    if: always() && (needs.version.result == 'success' || needs.version.result == 'skipped')
+    needs: prepare
     uses: AtelierVR/mod.builder/.github/workflows/build.yml@main
     with:
-      version: ${{ needs.version.outputs.resolved }}
+      mod_id: ${{ needs.prepare.outputs.mod_id }}
+      version: ${{ needs.prepare.outputs.version }}
       noLibraryCache: ${{ inputs.no_library_cache || false }}
     secrets:
       UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -44,9 +45,10 @@ jobs:
       UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
 
   release:
-    needs: [ version, build ]
-    if: github.event_name != 'pull_request'
+    needs: [ prepare, build ]
     uses: AtelierVR/mod.builder/.github/workflows/release.yml@main
     with:
-      tag: ${{ needs.version.outputs.tag }}
-      prerelease: ${{ needs.version.outputs.prerelease }}
+      mod_id: ${{ needs.prepare.outputs.mod_id }}
+      version: ${{ needs.prepare.outputs.version }}
+      tag: ${{ needs.prepare.outputs.tag }}
+      prerelease: ${{ needs.prepare.outputs.prerelease }}
