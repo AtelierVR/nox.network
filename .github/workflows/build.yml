@@ -31,8 +31,6 @@ jobs:
   check:
     needs: prepare
     uses: AtelierVR/mod.builder/.github/workflows/check.yml@main
-    with:
-      valid: ${{ needs.prepare.outputs.valid }}
 
   build:
     needs: [ prepare, check ]
