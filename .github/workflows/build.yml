@@ -1,6 +1,6 @@
 name: Build & Release
 
-run-name: "${{ github.ref_name }} by @${{ github.actor }}"
+run-name: "${{ github.ref_name }}@${{ github.sha }} by @${{ github.actor }}"
 
 on:
   push:
