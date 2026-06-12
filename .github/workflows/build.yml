@@ -33,7 +33,7 @@ jobs:
       valid: ${{ needs.prepare.outputs.valid }}
 
   build:
-    needs: prepare
+    needs: [ prepare, check ]
     uses: AtelierVR/mod.builder/.github/workflows/build.yml@main
     with:
       mod_id: ${{ needs.prepare.outputs.mod_id }}
