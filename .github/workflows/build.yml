@@ -38,6 +38,7 @@ jobs:
     with:
       mod_id: ${{ needs.prepare.outputs.mod_id }}
       version: ${{ needs.prepare.outputs.version }}
+      platforms: "windows linux"
       no_library_cache: ${{ inputs.no_library_cache || false }}
     secrets:
       UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
