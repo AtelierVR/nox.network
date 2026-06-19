@@ -115,6 +115,7 @@ namespace Nox.Network.Runtime {
 
 			if (request == null) {
 				request = RequestExtension.To(url);
+				request.SetRequestHeader("Accept", "image/png, image/jpeg");
 				request.downloadHandler = new DownloadHandlerTexture();
 				_activeRequests.Add(request);
 				request.HandleDownloadProgress(progress, token);
