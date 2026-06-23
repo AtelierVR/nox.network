@@ -75,7 +75,7 @@ namespace Nox.Network.Runtime {
 		}
 
 		#if UNITY_EDITOR
-		[MenuItem("Tools/Nox/Network Test Upload")]
+		[MenuItem("Nox/Tests/Network Upload")]
 		public static void TestUpload()
 			=> _instance?.OnPostInitializeMainAsync().Forget();
 
