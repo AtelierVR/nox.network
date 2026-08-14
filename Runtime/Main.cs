@@ -77,9 +77,12 @@ namespace Nox.Network.Runtime {
 		#if UNITY_EDITOR
 		[MenuItem("Nox/Tests/Network Upload")]
 		public static void TestUpload()
-			=> _instance?.OnPostInitializeMainAsync().Forget();
+			=> _instance?.TestUploadAsync().Forget();
 
-		public async UniTask OnPostInitializeMainAsync() {
+		public void OnPostInitializeMain()
+			=> TestUploadAsync().Forget();
+
+		public async UniTask TestUploadAsync() {
 			var req = RequestExtension.To("https://httpbin.org/post");
 			req.method = RequestExtension.Method.POST;
 
