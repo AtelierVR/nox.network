@@ -61,7 +61,7 @@ namespace Nox.CCK.Network {
 		/// <see cref="SizeMultiplier"/> changes. Can also be called manually.
 		/// </summary>
 		public void Refresh()
-			=> LoadAsync().Forget();
+			=> LoadAsync(forceReload: true).Forget();
 
 		// ------------------------------------------------------------------
 		// Unity Lifecycle
@@ -85,11 +85,42 @@ namespace Nox.CCK.Network {
 			=> CancelCurrent();
 
 		#if UNITY_EDITOR
+		private string _prevUrl;
+		private float _prevMultiplier;
+
 		private void OnValidate() {
 			// Auto-resolve component references in the editor
 			if (!_rectTransform) _rectTransform = GetComponent<RectTransform>();
 			if (!_image)         _image         = GetComponent<Image>();
 			if (!_rawImage)      _rawImage      = GetComponent<RawImage>();
+
+			// Force reload if URL or multiplier changed in editor
+			if (_prevUrl != _url || !Mathf.Approximately(_prevMultiplier, _sizeMultiplier)) {
+				_prevUrl = _url;
+				_prevMultiplier = _sizeMultiplier;
+				
+				// Only reload if URL is not empty
+				if (!string.IsNullOrEmpty(_url)) {
+					Refresh();
+				}
+			}
+		}
+
+		private void OnDrawGizmos() {
+			if (!_rectTransform) return;
+			
+			var size = CalculateTargetSize();
+			if (size <= 0) return;
+
+			// Draw label at the center of the RectTransform
+			var style = new GUIStyle(GUI.skin.label) {
+				alignment = TextAnchor.MiddleCenter,
+				fontSize = 12,
+				normal = { textColor = Color.cyan }
+			};
+
+			var center = _rectTransform.position;
+			UnityEditor.Handles.Label(center, $"{size}px", style);
 		}
 		#endif
 
@@ -97,7 +128,7 @@ namespace Nox.CCK.Network {
 		// Core logic
 		// ------------------------------------------------------------------
 
-		private async UniTask LoadAsync() {
+		private async UniTask LoadAsync(bool forceReload = false) {
 			if (!isActiveAndEnabled) return;
 			if (string.IsNullOrEmpty(_url)) {
 				ClearTexture();
@@ -114,7 +145,14 @@ namespace Nox.CCK.Network {
 			if (_cts.IsCancellationRequested) return;
 
 			try {
-				var resolvedUrl = ResolveUrl(_url);
+				var size = CalculateTargetSize();
+				
+				// Skip download if we already have this size or better (unless forced)
+				if (!forceReload && size > 0 && size <= _lastRequestedSize && !string.IsNullOrEmpty(_lastResolvedUrl)) {
+					return;
+				}
+
+				var resolvedUrl = ResolveUrl(_url, size);
 
 				var req = RequestExtension.To(resolvedUrl);
 				req.downloadHandler = new DownloadHandlerTexture();
@@ -125,6 +163,7 @@ namespace Nox.CCK.Network {
 					if (texture) {
 						ApplyTexture(texture);
 						_lastResolvedUrl = resolvedUrl;
+						_lastRequestedSize = size;
 						return;
 					}
 				}
@@ -139,13 +178,10 @@ namespace Nox.CCK.Network {
 		}
 
 		/// <summary>
-		/// Resolves the final URL with a <c>?size=N</c> (or <c>&amp;size=N</c>) parameter
-		/// determined by the on-screen pixel dimensions of the target component.
+		/// Resolves the final URL with a <c>?size=N</c> (or <c>&amp;size=N</c>) parameter.
 		/// </summary>
-		private string ResolveUrl(string baseUrl) {
+		private string ResolveUrl(string baseUrl, int size) {
 			if (string.IsNullOrEmpty(baseUrl)) return baseUrl;
-
-			var size = CalculateTargetSize();
 			if (size <= 0) return baseUrl; // can't determine size, use raw URL
 
 			// Remove any existing ?size= / &size= parameter
@@ -157,8 +193,7 @@ namespace Nox.CCK.Network {
 
 		/// <summary>
 		/// Calculates the pixel size needed based on the actual on-screen pixel dimensions
-		/// of the target component. Uses the corners of the RectTransform converted to screen
-		/// space, which correctly accounts for Canvas scaling, anchors, and layout.
+		/// of the target component. Uses the rect size multiplied by the canvas scale factor.
 		/// Returns the longest edge (width or height) multiplied by <see cref="_sizeMultiplier"/>.
 		/// </summary>
 		private int CalculateTargetSize() {
@@ -167,17 +202,13 @@ namespace Nox.CCK.Network {
 			var canvas = _rectTransform.GetComponentInParent<Canvas>();
 			if (!canvas) return -1;
 
-			// Get the 4 corners of the rect in world space, then convert to screen pixels
-			var corners = new Vector3[4];
-			_rectTransform.GetWorldCorners(corners);
+			// Get the canvas scale factor (handles Canvas Scaler properly)
+			float scaleFactor = GetCanvasScaleFactor(canvas);
 
-			Camera cam = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
-
-			for (var i = 0; i < 4; i++)
-				corners[i] = RectTransformUtility.WorldToScreenPoint(cam, corners[i]);
-
-			var pixelWidth  = Mathf.Abs(corners[2].x - corners[0].x); // top-right.x - bottom-left.x
-			var pixelHeight = Mathf.Abs(corners[2].y - corners[0].y); // top-right.y - bottom-left.y
+			// Use the rect's size directly, multiplied by the scale factor
+			var rectSize = _rectTransform.rect.size;
+			var pixelWidth  = Mathf.Abs(rectSize.x * scaleFactor);
+			var pixelHeight = Mathf.Abs(rectSize.y * scaleFactor);
 			var maxPixels   = Mathf.Max(pixelWidth, pixelHeight);
 
 			if (maxPixels <= 0f) return -1;
@@ -186,6 +217,35 @@ namespace Nox.CCK.Network {
 
 			// Clamp to sane sizes (16 - 4096)
 			return Mathf.Clamp(size, 16, 4096);
+		}
+
+		/// <summary>
+		/// Gets the scale factor that converts RectTransform units to screen pixels.
+		/// Handles all Canvas render modes and Canvas Scaler configurations.
+		/// </summary>
+		private float GetCanvasScaleFactor(Canvas canvas) {
+			if (canvas.renderMode == RenderMode.ScreenSpaceOverlay) {
+				// For overlay canvas, use the canvas scale directly
+				return canvas.scaleFactor;
+			}
+
+			// For Screen Space - Camera and World Space, calculate from camera
+			var cam = canvas.worldCamera;
+			if (!cam) return 1f;
+
+			// Get corners in world space
+			var corners = new Vector3[4];
+			_rectTransform.GetWorldCorners(corners);
+
+			// Convert to screen points and measure
+			var bl = RectTransformUtility.WorldToScreenPoint(cam, corners[0]);
+			var tr = RectTransformUtility.WorldToScreenPoint(cam, corners[2]);
+
+			var screenDist = Vector2.Distance(bl, tr);
+			var worldDist = Vector3.Distance(corners[0], corners[2]);
+
+			if (worldDist <= 0f) return 1f;
+			return screenDist / worldDist;
 		}
 
 		private void ApplyTexture(Texture2D texture) {
