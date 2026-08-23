@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 
@@ -24,6 +25,14 @@ namespace Nox.CCK.Network {
 		[Tooltip("Multiplier applied to the on-screen size before requesting (default 1 = exact pixels).")]
 		private float _sizeMultiplier = 1f;
 
+		[SerializeField]
+		[Tooltip("Invoked when the image has been successfully loaded and applied.")]
+		private UnityEvent<Texture2D> _onSuccess = new();
+
+		[SerializeField]
+		[Tooltip("Invoked when the image failed to load (empty URL, network error, invalid response...).")]
+		private UnityEvent<string> _onError = new();
+
 		private Image _image;
 		private RawImage _rawImage;
 		private RectTransform _rectTransform;
@@ -34,6 +43,14 @@ namespace Nox.CCK.Network {
 		// ------------------------------------------------------------------
 		// Public API
 		// ------------------------------------------------------------------
+
+		/// <summary>Invoked when the image is successfully loaded. Parameter: the loaded texture.</summary>
+		public UnityEvent<Texture2D> OnSuccess
+			=> _onSuccess;
+
+		/// <summary>Invoked when the image failed to load. Parameter: the error message.</summary>
+		public UnityEvent<string> OnError
+			=> _onError;
 
 		/// <summary>Current URL.</summary>
 		public string Url {
@@ -132,6 +149,7 @@ namespace Nox.CCK.Network {
 			if (!isActiveAndEnabled) return;
 			if (string.IsNullOrEmpty(_url)) {
 				ClearTexture();
+				_onError.Invoke("URL is empty");
 				return;
 			}
 
@@ -164,16 +182,21 @@ namespace Nox.CCK.Network {
 						ApplyTexture(texture);
 						_lastResolvedUrl = resolvedUrl;
 						_lastRequestedSize = size;
+						_onSuccess.Invoke(texture);
 						return;
 					}
 				}
 
+				if (_cts.IsCancellationRequested) return;
+
 				ClearTexture();
+				_onError.Invoke($"Failed to load '{_url}'");
 			} catch (OperationCanceledException) {
 				// expected when cancelled
 			} catch (Exception ex) {
 				Debug.LogWarning($"[NetworkImage] Failed to load '{_url}': {ex.Message}", this);
 				ClearTexture();
+				_onError.Invoke(ex.Message);
 			}
 		}
 
