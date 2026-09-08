@@ -140,6 +140,8 @@ namespace Nox.CCK.Network {
 
 			try {
 				LogFetch(request);
+				request.certificateHandler = new ResponseCertificate(request.certificateHandler);
+
 				await request.SendWebRequest()
 					.ToUniTask(cancellationToken: token);
 

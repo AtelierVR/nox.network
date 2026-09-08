@@ -10,7 +10,8 @@ using Nox.CCK.Mods.Cores;
 using Nox.CCK.Mods.Initializers;
 using Nox.CCK.Network;
 using Nox.CCK.Utils;
-using Nox.Users;
+using Nox.Network.Runtime.Modules;
+using Nox.Scripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -22,10 +23,19 @@ namespace Nox.Network.Runtime {
 		private static Main _instance;
 		private LanguagePack _language;
 
+		private static IScriptingAPI ScriptingAPI
+			=> _instance.coreAPI.ModAPI
+				.GetMod("scripting")
+				?.GetInstance<IScriptingAPI>();
+
 		public void OnInitialize(IModCoreAPI api) {
 			coreAPI = api;
 			_instance = this;
 			RequestExtension.OnCreated.AddListener(OnBeforeRequest);
+			ScriptingAPI?.RegisterModule(HttpModule.Module);
+			ScriptingAPI?.RegisterConverter(HttpModule.BodyConverter);
+			ScriptingAPI?.RegisterConverter(HttpModule.RequestConverter);
+			ScriptingAPI?.RegisterConverter(HttpModule.CertificateConverter);
 		}
 		private void OnBeforeRequest(Request arg0) {
 			if (coreAPI == null) return;
@@ -103,6 +113,10 @@ namespace Nox.Network.Runtime {
 
 		public void OnDispose() {
 			RequestExtension.OnCreated.RemoveListener(OnBeforeRequest);
+			ScriptingAPI?.UnregisterModule(HttpModule.Module);
+			ScriptingAPI?.UnregisterConverter(HttpModule.BodyConverter);
+			ScriptingAPI?.UnregisterConverter(HttpModule.RequestConverter);
+			ScriptingAPI?.UnregisterConverter(HttpModule.CertificateConverter);
 			coreAPI = null;
 			_instance = null;
 		}

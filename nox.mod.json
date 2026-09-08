@@ -76,6 +76,18 @@
       "type": "depends",
       "version": ">=1.0.0",
       "register": "git+https://github.com/AtelierVR/nox.users.git"
+    },
+    {
+      "id": "nox.scripting",
+      "type": "depends",
+      "version": ">=1.0.0",
+      "register": "git+https://github.com/AtelierVR/nox.scripting.git"
+    }
+  ],
+  "constraints": [
+    {
+      "type": "after",
+      "id": "scripting"
     }
   ]
 }

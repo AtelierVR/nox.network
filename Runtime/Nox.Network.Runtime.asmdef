@@ -6,7 +6,9 @@
         "UniTask",
         "Nox.Network",
         "Nox.Users",
-        "Nox.CCK.Network"
+        "Nox.CCK.Network",
+        "Nox.Scripting",
+        "Nox.CCK.Scripting"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
