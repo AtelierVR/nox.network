@@ -36,6 +36,8 @@ namespace Nox.Network.Runtime {
 			ScriptingAPI?.RegisterConverter(HttpModule.BodyConverter);
 			ScriptingAPI?.RegisterConverter(HttpModule.RequestConverter);
 			ScriptingAPI?.RegisterConverter(HttpModule.CertificateConverter);
+			ScriptingAPI?.RegisterModule(TcpModule.Module);
+			ScriptingAPI?.RegisterConverter(TcpModule.SocketConverter);
 		}
 		private void OnBeforeRequest(Request arg0) {
 			if (coreAPI == null) return;
