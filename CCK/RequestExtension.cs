@@ -1,16 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Nox.CCK.Events;
-using Nox.CCK.Utils;
 using UnityEngine;
 using UnityEngine.Networking;
 using Logger = Nox.CCK.Utils.Logger;
+
 namespace Nox.CCK.Network {
 	public static class RequestExtension {
 		/// <summary>
@@ -124,41 +123,34 @@ namespace Nox.CCK.Network {
 			=> request.result == UnityWebRequest.Result.InProgress;
 
 		public static async UniTask<bool> Send(this UnityWebRequest request, CancellationToken token = default) {
-			if (request.IsSent()) {
-				Logger.LogDebug("Request has already been sent. Waiting for completion...");
-				await request.Wait(token);
-				return request.IsSuccess();
-			}
+		    if (request.IsSent()) {
+		        await request.Wait(token);
+		        return request.IsSuccess();
+		    }
 
-			await OnBeforeSend.InvokeAsync(request);
+		    await OnBeforeSend.InvokeAsync(request);
 
-			if (token.IsCancellationRequested) {
-				request.Abort();
-				Logger.LogWarning("Request was cancelled before sending.");
-				return false;
-			}
+		    if (token.IsCancellationRequested) {
+		        request.Abort();
+		        return false;
+		    }
 
-			try {
-				LogFetch(request);
-				request.certificateHandler = new ResponseCertificate(request.certificateHandler);
-
-				await request.SendWebRequest()
+		    try {
+		        LogFetch(request);
+		        request.certificateHandler = new ResponseCertificate(request.certificateHandler);
+		        await request.SendWebRequest()
 					.ToUniTask(cancellationToken: token);
-
-				if (!request.IsSuccess())
-					throw new Exception("The request completed with an error.");
-
-				return true;
-			} catch (Exception ex) {
-				Logger.LogError(new Exception(
-					$"Request to {request.method} {request.url} failed with exception:\n{request.result} - {request.error}",
-					ex
-				));
-				return false;
-			}
-			finally {
-				await OnCompleted.InvokeAsync(request);
-			}
+		        return request.IsSuccess();
+		    } catch (Exception ex) {
+		        Logger.LogError(new Exception(
+		            $"Request to {request.method} {request.url} failed with exception:\n{request.result} - {request.error}",
+		            ex
+		        ));
+		        return false;
+		    }
+		    finally {
+		        await OnCompleted.InvokeAsync(request);
+		    }
 		}
 
 		private static void LogFetch(UnityWebRequest request) {

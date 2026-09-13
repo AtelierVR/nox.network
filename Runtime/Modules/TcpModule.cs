@@ -65,10 +65,8 @@ namespace Nox.Network.Runtime.Modules {
 						return null;
 					}
 					var socket = new TcpSocket(host, port, ctx.CancellationToken);
-					if (!await socket.ConnectAsync()) {
-						Logger.LogWarning($"Connection failed to {host}:{port}.", tag: nameof(TcpModule));
+					if (!await socket.ConnectAsync()) 
 						return null;
-					}
 					return (object)socket;
 				})
 				.Build();
@@ -292,7 +290,7 @@ namespace Nox.Network.Runtime.Modules {
 			// ── Write ────────────────────────────────────────────────────────
 
 			/// <summary>Write raw bytes to the stream.</summary>
-			public UniTask Write(byte[] bytes)
+			public UniTask Send(byte[] bytes)
 				=> UniTask.RunOnThreadPool(() => SendBlocking(bytes), cancellationToken: _token);
 
 			private void SendBlocking(byte[] bytes) {
@@ -367,11 +365,10 @@ namespace Nox.Network.Runtime.Modules {
 				.AddProperty("port",      sock => sock.Port,      flags: ScriptingTypePropertyFlags.InspectGetter | ScriptingTypePropertyFlags.IsReadOnly)
 				.AddProperty("connected", sock => sock.Connected, flags: ScriptingTypePropertyFlags.InspectGetter | ScriptingTypePropertyFlags.IsReadOnly)
 				// Methods
-				.AddAsyncMethod("write", async (sock, args) => {
-					await sock.Write(args.Length > 0 ? args[0] as byte[] : null);
+				.AddAsyncMethod("send", async (sock, args) => {
+					await sock.Send(args.Length > 0 ? args[0] as byte[] : null);
 					return (object)null;
 				})
-				.AddAsyncMethod("read", async (sock, _) => (object)await sock.Read())
 				.AddAsyncMethod("close", async (sock, _) => {
 					await sock.Close();
 					return (object)null;

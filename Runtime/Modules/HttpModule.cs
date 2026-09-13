@@ -191,8 +191,7 @@ namespace Nox.Network.Runtime.Modules {
 				}
 
 			// Send the request
-			if (!await RequestExtension.Send(request))
-				return null;
+			await RequestExtension.Send(request);
 
 			// `Body` is a lazy reader object (undici-style body mixins): scripts
 			// consume it via `await res.body.text()`, `.json()` or `.bytes()`.
