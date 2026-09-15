@@ -123,34 +123,37 @@ namespace Nox.CCK.Network {
 			=> request.result == UnityWebRequest.Result.InProgress;
 
 		public static async UniTask<bool> Send(this UnityWebRequest request, CancellationToken token = default) {
+		    if (request == null) 
+				throw new ArgumentNullException(nameof(request));
+
 		    if (request.IsSent()) {
 		        await request.Wait(token);
 		        return request.IsSuccess();
 		    }
 
 		    await OnBeforeSend.InvokeAsync(request);
+		    token.ThrowIfCancellationRequested();
 
-		    if (token.IsCancellationRequested) {
-		        request.Abort();
-		        return false;
-		    }
+		    LogFetch(request);
+		    request.certificateHandler = new ResponseCertificate(request.certificateHandler);
 
 		    try {
-		        LogFetch(request);
-		        request.certificateHandler = new ResponseCertificate(request.certificateHandler);
 		        await request.SendWebRequest()
-					.ToUniTask(cancellationToken: token);
-		        return request.IsSuccess();
+		            .ToUniTask(cancellationToken: token);
+		    } catch (OperationCanceledException) {
+		        request.Abort();
+		        throw;
 		    } catch (Exception ex) {
 		        Logger.LogError(new Exception(
 		            $"Request to {request.method} {request.url} failed with exception:\n{request.result} - {request.error}",
 		            ex
 		        ));
-		        return false;
-		    }
-		    finally {
+		        throw; 
+		    } finally {
 		        await OnCompleted.InvokeAsync(request);
 		    }
+
+		    return request.IsSuccess();
 		}
 
 		private static void LogFetch(UnityWebRequest request) {
