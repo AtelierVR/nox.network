@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -122,6 +123,12 @@ namespace Nox.CCK.Network {
 		public static bool IsProcessing(this UnityWebRequest request)
 			=> request.result == UnityWebRequest.Result.InProgress;
 
+		/// <summary>
+		/// Sends the request and returns its success. An error status from the server
+		/// (4xx/5xx) gives <c>false</c> instead of an exception, so the caller can read
+		/// <c>request.responseCode</c> and <c>request.error</c> itself. Any other failure
+		/// (no reply at all, invalid data…) and cancellation are still thrown.
+		/// </summary>
 		public static async UniTask<bool> Send(this UnityWebRequest request, CancellationToken token = default) {
 		    if (request == null) 
 				throw new ArgumentNullException(nameof(request));
@@ -143,7 +150,11 @@ namespace Nox.CCK.Network {
 		    } catch (OperationCanceledException) {
 		        request.Abort();
 		        throw;
-		    } catch (Exception ex) {
+			} catch (UnityWebRequestException) when (request.responseCode >= 400) {
+				// the server answered with an error status (4xx/5xx): Send returns false,
+				// the caller reads request.responseCode / request.error itself. No reply
+				// at all (responseCode 0) or invalid data still falls through and throws.
+			} catch (Exception ex) {
 		        Logger.LogError(new Exception(
 		            $"Request to {request.method} {request.url} failed with exception:\n{request.result} - {request.error}",
 		            ex
