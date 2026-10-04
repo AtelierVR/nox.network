@@ -2,7 +2,8 @@
     "name": "Nox.Network",
     "rootNamespace": "",
     "references": [
-        "UniTask"
+        "UniTask",
+        "Nox.CCK"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

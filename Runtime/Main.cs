@@ -9,7 +9,9 @@ using Nox.CCK.Language;
 using Nox.CCK.Mods.Cores;
 using Nox.CCK.Mods.Initializers;
 using Nox.CCK.Network;
+using Nox.CCK.Network.Assets;
 using Nox.CCK.Utils;
+using Nox.Network.Assets;
 using Nox.Network.Runtime.Modules;
 using Nox.Scripting;
 using UnityEditor;
@@ -181,14 +183,37 @@ namespace Nox.Network.Runtime {
 				return null;
 			}
 
-			if (Hashing.HashFile(tmp) != hash) {
-				Logger.LogWarning($"Hash mismatch for file downloaded from {url}.", tag: "Network");
+			// Le hash attendu vient du pipeline d'assets : "sha256:<hex>" ou "<type>-<hex>" (nom de
+			// fichier de cache). Hashing.HashFile(path) rend un digest nu : comparer les deux textes
+			// tels quels rate toujours, on compare donc les valeurs décodées.
+			var expected = AssetHash.Parse(hash);
+			var actual   = AssetHash.Parse(await Digest(tmp, expected));
+
+			if (!AssetHash.Matches(expected, actual)) {
+				Logger.LogWarning($"Hash mismatch for file downloaded from {url} (expected {expected}, got {actual}).", tag: "Network");
 				if (File.Exists(tmp))
 					File.Delete(tmp);
 				return null;
 			}
 
 			return tmp;
+		}
+
+		/// <summary>
+		/// Digest of a downloaded file, computed with the declared algorithm, off the main thread so a
+		/// gigabyte-scale bundle does not freeze the caller.
+		/// </summary>
+		private static async UniTask<string> Digest(string path, IAssetHash expected) {
+			if (expected?.Type == null)
+				return await Hashing.HashFileAsync(AssetHash.Sha256, path);
+
+			try {
+				return await Hashing.HashFileAsync(expected.Type, path);
+			} catch (ArgumentException e) {
+				// Algorithme que le client ne sait pas calculer : le digest par défaut reste comparable
+				Logger.LogWarning($"Cannot hash with '{expected.Type}': {e.Message}", tag: "Network");
+				return await Hashing.HashFileAsync(AssetHash.Sha256, path);
+			}
 		}
 	}
 }
