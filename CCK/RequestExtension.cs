@@ -206,17 +206,25 @@ namespace Nox.CCK.Network {
 			// Deserialize on a ThreadPool thread to avoid blocking the main thread
 			// (Newtonsoft JSON on large payloads can take 50-100ms)
 			await UniTask.SwitchToThreadPool();
-			var result = JsonConvert.DeserializeObject<T>(text);
-			await UniTask.SwitchToMainThread(cancellationToken: token);
-			return result;
+
+			try {
+				return JsonConvert.DeserializeObject<T>(text);
+			} finally {
+				// Never leave the caller on the ThreadPool thread, even when the payload is not
+				// the expected JSON: Unity APIs (result, responseCode, error…) are main thread only.
+				await UniTask.SwitchToMainThread(cancellationToken: CancellationToken.None);
+			}
 		}
 
 		public static async UniTask<JToken> Json(this UnityWebRequest request, CancellationToken token = default) {
 			var text = await request.Text(token);
 			await UniTask.SwitchToThreadPool();
-			var result = JToken.Parse(text);
-			await UniTask.SwitchToMainThread(cancellationToken: token);
-			return result;
+
+			try {
+				return JToken.Parse(text);
+			} finally {
+				await UniTask.SwitchToMainThread(cancellationToken: CancellationToken.None);
+			}
 		}
 
 		public static async UniTask<byte[]> Data(this UnityWebRequest request, CancellationToken token = default) {

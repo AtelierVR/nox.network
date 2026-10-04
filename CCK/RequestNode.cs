@@ -29,11 +29,55 @@ namespace Nox.CCK.Network {
 			var gateway = await NodeDiscover.GetGateway(address);
 			if (string.IsNullOrEmpty(gateway))
 				return null;
-			var req = RequestExtension.To(MergeUrl(gateway, path), method);
-			req.downloadHandler = new DownloadHandlerBuffer();
+			return await Create(address, MergeUrl(gateway, path), method);
+		}
+
+		/// <summary>
+		/// Creates a request to an absolute URL. URLs served by the node gateway are rebuilt from
+		/// it (keeping the discovery cache and the session token); any other URL is used as-is.
+		/// </summary>
+		/// <param name="address"></param>
+		/// <param name="url"></param>
+		/// <param name="method"></param>
+		/// <returns></returns>
+		public static async UniTask<UnityWebRequest> ToUrl(string address, string url, string method = Method.GET) {
+			if (string.IsNullOrEmpty(url))
+				return null;
+
+			var gateway = string.IsNullOrEmpty(address) ? null : await NodeDiscover.GetGateway(address);
+			var target  = url;
+
+			if (!string.IsNullOrEmpty(gateway)) {
+				var prefix = gateway.EndsWith("/") ? gateway : gateway + "/";
+
+				if (url.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+					target = "/" + url.Substring(prefix.Length);
+				else if (url.StartsWith(gateway, StringComparison.OrdinalIgnoreCase))
+					target = url.Substring(gateway.Length);
+
+				target = MergeUrl(gateway, target);
+			}
+
+			return await Create(address, target, method);
+		}
+
+		/// <summary>
+		/// Session token formatted for the <c>Authorization</c> header, or <c>null</c> when the
+		/// server has no stored session.
+		/// </summary>
+		public static string GetAuthorization(string address) {
+			if (string.IsNullOrEmpty(address))
+				return null;
 			var token = Config.Load().Get<string>(new[] { "servers", address, "_token" });
-			if (!string.IsNullOrEmpty(token))
-				req.SetRequestHeader("Authorization", $"Bearer {token}");
+			return string.IsNullOrEmpty(token) ? null : $"Bearer {token}";
+		}
+
+		private static async UniTask<UnityWebRequest> Create(string address, string url, string method) {
+			var req = RequestExtension.To(url, method);
+			req.downloadHandler = new DownloadHandlerBuffer();
+			var authorization = GetAuthorization(address);
+			if (!string.IsNullOrEmpty(authorization))
+				req.SetRequestHeader("Authorization", authorization);
 			await OnCreated.InvokeAsync(address, req);
 			return req;
 		}
