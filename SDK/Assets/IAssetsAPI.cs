@@ -14,6 +14,7 @@ namespace Nox.Network.Assets {
 	/// <item><description><see cref="CreateRelease"/> — <c>PUT /{endpoint}/{asset}/releases</c></description></item>
 	/// <item><description><see cref="ReserveFile"/> — <c>POST …/releases/{release}/files</c></description></item>
 	/// <item><description><see cref="UploadFile"/> — <c>PUT {slot.Url}</c>, or <see cref="Upload"/> for both steps</description></item>
+	/// <item><description><see cref="FetchFile"/> — poll <c>…/files/{file}/status</c> until <c>completed</c>/<c>failed</c></description></item>
 	/// </list>
 	/// </summary>
 	public interface IAssetsAPI {
@@ -90,6 +91,32 @@ namespace Nox.Network.Assets {
 			string asset,
 			string release,
 			string file,
+			CancellationToken token = default
+		);
+
+		/// <summary>
+		/// Lists the files of a release (<c>GET /{endpoint}/{asset}/releases/{release}/files</c>),
+		/// walking the pages until <c>total</c> is reached. A release never embeds its files, so this
+		/// is the route used to read the variants already published — typically to resolve the
+		/// instance's <c>unique</c> rules before reserving a new slot.
+		/// </summary>
+		UniTask<IAssetFile[]> FetchFiles(
+			string server,
+			AssetEndpoint endpoint,
+			string asset,
+			string release,
+			CancellationToken token = default
+		);
+
+		/// <summary>
+		/// Reads the upload rules the instance declares for the asset type served by
+		/// <paramref name="endpoint"/> (<c>GET /configs</c> → <c>assets[].rules</c>). Returns
+		/// <c>null</c> when the config could not be read; a type that declares no rule yields empty
+		/// rules (never <c>null</c>).
+		/// </summary>
+		UniTask<IAssetUploadRules> FetchRules(
+			string server,
+			AssetEndpoint endpoint,
 			CancellationToken token = default
 		);
 
@@ -182,9 +209,13 @@ namespace Nox.Network.Assets {
 		);
 
 		/// <summary>
-		/// Streams the file bytes into a reserved slot (<c>PUT {slot.Url}</c>). The server analyzes,
-		/// validates and completes the file synchronously, then returns it <c>completed</c>.
-		/// A failed file keeps its slot and can be retried by re-uploading to the same slot.
+		/// Streams the file bytes into a reserved slot (<c>PUT {slot.Url}</c>). The server receives
+		/// and verifies the bytes, answers <c>queued</c> immediately and runs the bundle analysis
+		/// out of band, so the returned file is usually still pending: poll it through
+		/// <see cref="FetchFile"/> while <c>Status</c> is <c>awaiting</c>/<c>queued</c>/<c>processing</c>
+		/// (use <c>RefetchAt</c> as the delay) until it settles on <c>completed</c> or <c>failed</c>.
+		/// A failed file keeps its slot and can be retried by re-uploading to the same slot until
+		/// it expires.
 		/// </summary>
 		UniTask<IAssetFile> UploadFile(
 			string server,

@@ -21,6 +21,12 @@ namespace Nox.Network.Assets {
 		IAssetStatus Status { get; }
 
 		/// <summary>
+		/// Numeric id of the file (<c>id</c>). The status route addresses a file by this id, not by
+		/// its name, so it is the reference to use while a slot is pending.
+		/// </summary>
+		uint Id { get; }
+
+		/// <summary>
 		/// Upload URL while the slot is pending, download URL once completed. With <c>?full=1</c>
 		/// the API sends <c>{ proxified, original }</c>: the proxified URL is exposed here.
 		/// </summary>

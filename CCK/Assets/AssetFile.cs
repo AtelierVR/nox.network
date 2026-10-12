@@ -12,6 +12,9 @@ namespace Nox.CCK.Network.Assets {
 	/// </summary>
 	[Serializable]
 	public class AssetFile : IAssetFile {
+		[JsonProperty("id")]
+		public uint Id { get; internal set; }
+
 		[JsonProperty("name")]
 		public string Name { get; internal set; }
 
@@ -83,7 +86,7 @@ namespace Nox.CCK.Network.Assets {
 			=> Hashs;
 
 		public override string ToString()
-			=> $"{nameof(AssetFile)}[{Name}, status={Status?.Status}, size={Size}]";
+			=> $"{nameof(AssetFile)}[{Id}, {Name}, status={Status?.Status}, size={Size}]";
 
 		/// <summary>Reads <c>url</c> as a plain string or as the <c>{ proxified, original }</c> object.</summary>
 		private class AssetUrlConverter : JsonConverter<string> {

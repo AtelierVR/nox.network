@@ -23,6 +23,13 @@ namespace Nox.CCK.Network.Assets {
 		[JsonProperty("full")]
 		public bool Full { get; set; }
 
+		/// <summary>
+		/// Cumulative <c>status</c> filter of the listing. Empty keeps the default (only the
+		/// completed resources); several values are OR-ed.
+		/// </summary>
+		[JsonIgnore]
+		public AssetState[] Status { get; set; }
+
 		[JsonIgnore]
 		public string QueryString
 			=> Build();
@@ -39,7 +46,8 @@ namespace Nox.CCK.Network.Assets {
 				Query  = request.Query,
 				Offset = request.Offset,
 				Limit  = request.Limit,
-				Full   = request.Full
+				Full   = request.Full,
+				Status = request.Status
 			};
 		}
 
@@ -48,7 +56,8 @@ namespace Nox.CCK.Network.Assets {
 				Query  = Query,
 				Offset = offset,
 				Limit  = Limit,
-				Full   = Full
+				Full   = Full,
+				Status = Status
 			};
 
 		private string Build() {
@@ -64,6 +73,12 @@ namespace Nox.CCK.Network.Assets {
 			if (Full) Add("full", "1");
 			if (Offset > 0) Add("offset", Offset.ToString());
 			if (Limit > 0) Add("limit", Limit.ToString());
+
+			// Cumulative status filter: each value is repeated, the API OR-es them. A combined
+			// value (Pending) is expanded into its individual states before being sent.
+			foreach (var state in Status ?? Array.Empty<AssetState>())
+				foreach (var value in state.ToValues())
+					Add("status", value);
 
 			return builder.Length == 0 ? string.Empty : "?" + builder;
 		}

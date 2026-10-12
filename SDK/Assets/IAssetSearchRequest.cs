@@ -17,6 +17,13 @@ namespace Nox.Network.Assets {
 		bool Full { get; set; }
 
 		/// <summary>
+		/// <c>status</c>: cumulative filter on the lifecycle state of the items. Empty (or
+		/// <c>null</c>) keeps the default, which only returns the <c>completed</c> resources;
+		/// several values are OR-ed (<c>?status=awaiting&amp;status=processing</c>).
+		/// </summary>
+		AssetState[] Status { get; set; }
+
+		/// <summary>
 		/// Query string (including the leading <c>?</c>) appended to the collection route,
 		/// or an empty string when no filter is set.
 		/// </summary>

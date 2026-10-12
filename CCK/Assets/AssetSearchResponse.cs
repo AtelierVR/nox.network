@@ -67,4 +67,30 @@ namespace Nox.CCK.Network.Assets {
 	/// </summary>
 	[Serializable]
 	public class AssetSearchResponse : AssetSearchResponse<Asset> { }
+
+	/// <summary>
+	/// Paginated result of <c>GET /{endpoint}/{asset}/releases/{release}/files</c>: the same envelope
+	/// as a search, its items typed as <see cref="AssetFile"/>. A release does not embed its files,
+	/// so this is the route used to read the variants already published.
+	/// </summary>
+	[Serializable]
+	public class AssetFileSearchResponse {
+		[JsonProperty("query")]
+		public string Query { get; internal set; }
+
+		[JsonProperty("total")]
+		public uint Total { get; internal set; }
+
+		[JsonProperty("limit")]
+		public uint Limit { get; internal set; }
+
+		[JsonProperty("offset")]
+		public uint Offset { get; internal set; }
+
+		[JsonProperty("items")]
+		public AssetFile[] Items { get; internal set; } = Array.Empty<AssetFile>();
+
+		public override string ToString()
+			=> $"{nameof(AssetFileSearchResponse)}[offset={Offset}, limit={Limit}, total={Total}, items={Items?.Length ?? 0}]";
+	}
 }

@@ -75,8 +75,14 @@ namespace Nox.CCK.Network.Assets {
 			if (file?.Hashs is not { Length: > 0 })
 				return null;
 
-			return file.Hashs.FirstOrDefault(hash => AssetHash.NormalizeType(hash?.Type) == AssetHash.NormalizeType(type))
-				?? file.Hashs[0];
+			// Normalized once instead of once per declared hash: calling NormalizeType inside the
+			// predicate re-normalized the same string for every entry of the list.
+			var wanted = AssetHash.NormalizeType(type);
+			foreach (var hash in file.Hashs)
+				if (AssetHash.NormalizeType(hash?.Type) == wanted)
+					return hash;
+
+			return file.Hashs[0];
 		}
 
 		/// <summary>
@@ -99,11 +105,25 @@ namespace Nox.CCK.Network.Assets {
 			Platform? platform = null,
 			Engine? engine = null,
 			string engineVersion = null
+		)
+			=> BestFile(release?.Files, platform, engine, engineVersion);
+
+		/// <summary>
+		/// File of <paramref name="files"/> that fits <paramref name="platform"/> and
+		/// <paramref name="engine"/>, or <c>null</c> when none is compatible. Same matching rules as
+		/// <see cref="BestFile(IAssetRelease,Platform?,Engine?,string)"/>, over a file list read from
+		/// the release files route (a release does not embed its files).
+		/// </summary>
+		public static IAssetFile BestFile(
+			this IAssetFile[] files,
+			Platform? platform = null,
+			Engine? engine = null,
+			string engineVersion = null
 		) {
 			IAssetFile best = null;
 			var bestScore = int.MinValue;
 
-			foreach (var file in release?.Files ?? Array.Empty<IAssetFile>()) {
+			foreach (var file in files ?? Array.Empty<IAssetFile>()) {
 				if (file == null)
 					continue;
 
@@ -196,6 +216,100 @@ namespace Nox.CCK.Network.Assets {
 			}
 
 			return parts.ToArray();
+		}
+
+		/// <summary>
+		/// Required attribute keys declared by <paramref name="rules"/> that
+		/// <paramref name="attributes"/> omits (compared case-insensitively). Empty when every required
+		/// key is present, or when the type declares no rule. A slot missing one of them is refused by
+		/// the server before any byte is sent.
+		/// </summary>
+		public static string[] MissingRequired(this IAssetUploadRules rules, IAssetAttribute[] attributes) {
+			if (rules?.Required is not { Length: > 0 })
+				return Array.Empty<string>();
+
+			var missing = new List<string>();
+
+			foreach (var key in rules.Required) {
+				if (string.IsNullOrEmpty(key) || AttributeValue(attributes, key) != null)
+					continue;
+
+				missing.Add(key);
+			}
+
+			return missing.ToArray();
+		}
+
+		/// <summary>
+		/// Files of <paramref name="files"/> whose attributes collide with <paramref name="attributes"/>
+		/// under the unique groups of <paramref name="rules"/>. For every group the declaration covers
+		/// in full, a file declaring the same keys with the same values (case-insensitively) is a
+		/// duplicate the server would refuse: it must be deleted before the new slot is reserved.
+		/// Empty when no group conflicts, or when the type declares no rule.
+		/// </summary>
+		public static IAssetFile[] UniqueConflicts(
+			this IAssetFile[] files,
+			IAssetUploadRules rules,
+			IAssetAttribute[] attributes
+		) {
+			if (rules?.Unique is not { Length: > 0 } || files is not { Length: > 0 })
+				return Array.Empty<IAssetFile>();
+
+			var conflicts = new List<IAssetFile>();
+
+			foreach (var group in rules.Unique) {
+				if (group is not { Length: > 0 })
+					continue;
+
+				// The declaration must cover the whole group for it to be enforceable.
+				var values = new string[group.Length];
+				var complete = true;
+
+				for (var i = 0; i < group.Length; i++) {
+					values[i] = AttributeValue(attributes, group[i]);
+
+					if (values[i] == null) {
+						complete = false;
+						break;
+					}
+				}
+
+				if (!complete)
+					continue;
+
+				foreach (var file in files) {
+					if (file == null || conflicts.Contains(file))
+						continue;
+
+					var matches = true;
+
+					for (var i = 0; i < group.Length; i++) {
+						var value = file.Attribute(group[i]);
+
+						if (value == null || !string.Equals(value, values[i], StringComparison.OrdinalIgnoreCase)) {
+							matches = false;
+							break;
+						}
+					}
+
+					if (matches)
+						conflicts.Add(file);
+				}
+			}
+
+			return conflicts.ToArray();
+		}
+
+		/// <summary>Value of an attribute in a declaration, or <c>null</c> when it is not declared.</summary>
+		private static string AttributeValue(IAssetAttribute[] attributes, string key) {
+			if (attributes == null || string.IsNullOrEmpty(key))
+				return null;
+
+			foreach (var attribute in attributes)
+				if (attribute != null && string.Equals(attribute.Key, key, StringComparison.OrdinalIgnoreCase))
+					return attribute.Value;
+
+			return null;
 		}
 	}
 }

@@ -7,6 +7,12 @@ namespace Nox.CCK.Network.Assets {
 	/// gateway. <c>{reference}</c> accepts an id or a name; names and versions are escaped.
 	/// </summary>
 	public static class AssetRoutes {
+		/// <summary>
+		/// Public instance configuration (<c>/configs</c>), which declares the upload rules of every
+		/// asset type served by the instance. Not bound to a collection.
+		/// </summary>
+		public const string Configs = "/configs";
+
 		public static string Collection(AssetEndpoint endpoint)
 			=> $"/{endpoint.Endpoint}";
 

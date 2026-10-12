@@ -249,18 +249,22 @@ namespace Nox.Network.Runtime.Assets {
 		) {
 			var fetched    = await Fetch(server, endpoint, asset, true, token);
 			var preference = fetched?.Release;
-			var release    = preference == null
+			// With ?full=1 the API sends { auto, value }: value is the release the client should
+			// use (the pinned one, or the latest while auto is true). The older resolved field is
+			// kept as a fallback for servers that still expose it.
+			var release = preference == null
 				? AssetReleasePreference.None
-				: preference.Auto
-					? preference.Resolved
-					: preference.Value;
+				: preference.Value > 0
+					? preference.Value
+					: preference.Resolved;
 
 			if (release <= 0) {
 				Logger.LogWarning($"Asset '{asset}' has no resolved release.", tag: LogTag);
 				return null;
 			}
 
-			return await FetchRelease(server, endpoint, asset, release.ToString(), true, token);
+			// A release never embeds its files, so `full` would only expand the url: leave it off.
+			return await FetchRelease(server, endpoint, asset, release.ToString(), false, token);
 		}
 
 		public async UniTask<IAssetFile> FetchFile(
@@ -278,6 +282,60 @@ namespace Nox.Network.Runtime.Assets {
 
 			var path = AssetRoutes.FileStatus(endpoint, asset, release, file);
 			return await Get<AssetFile>(server, path, $"GET {path}", token);
+		}
+
+		public async UniTask<IAssetFile[]> FetchFiles(
+			string server,
+			AssetEndpoint endpoint,
+			string asset,
+			string release,
+			CancellationToken token = default
+		) {
+			if (!endpoint.IsValid || string.IsNullOrEmpty(asset) || string.IsNullOrEmpty(release)) {
+				Logger.LogError($"Invalid release reference '{asset}/{release}' for '{endpoint}'.", tag: LogTag);
+				return null;
+			}
+
+			// A release never embeds its files: they are paged, so walk the pages until `total`.
+			const uint limit = 100;
+			var files  = new List<IAssetFile>();
+			var offset = 0u;
+
+			while (true) {
+				var path = AssetRoutes.Files(endpoint, asset, release) + $"?limit={limit}&offset={offset}";
+				var page = await Get<AssetFileSearchResponse>(server, path, $"GET {path}", token);
+
+				if (page == null)
+					return files.Count > 0 ? files.ToArray() : null;
+
+				if (page.Items is not { Length: > 0 })
+					break;
+
+				files.AddRange(page.Items);
+
+				if (files.Count >= page.Total)
+					break;
+
+				offset += (uint)page.Items.Length;
+			}
+
+			return files.ToArray();
+		}
+
+		public async UniTask<IAssetUploadRules> FetchRules(
+			string server,
+			AssetEndpoint endpoint,
+			CancellationToken token = default
+		) {
+			const string path = AssetRoutes.Configs;
+			var config = await Get<InstanceConfig>(server, path, $"GET {path}", token);
+
+			if (config == null) {
+				Logger.LogWarning("Could not read the instance config; the upload rules are unknown.", tag: LogTag);
+				return null;
+			}
+
+			return config.RulesFor(endpoint);
 		}
 
 		#endregion
@@ -559,6 +617,19 @@ namespace Nox.Network.Runtime.Assets {
 
 			var address = ResolveServer(server);
 			var slot    = await FetchFile(server, endpoint, asset, release, file, token);
+
+			// url only becomes the download URL once the upload completed: while the slot is
+			// awaiting/queued/processing it still points at the upload URL, so its bytes are not
+			// downloadable yet.
+			if (slot?.Status != null && slot.Status.Status != AssetState.Completed) {
+				Logger.LogError(
+					$"Cannot download '{asset}/{release}/{file}': the file is '{slot.Status.Status}'"
+					+ " (only completed files are downloadable).",
+					tag: LogTag
+				);
+				return null;
+			}
+
 			var hash    = slot?.Hashs is { Length: > 0 } ? slot.Hashs[0] : null;
 
 			if (AssetHash.Has(hash) && Cache.Has(hash))
