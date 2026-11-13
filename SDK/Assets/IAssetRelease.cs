@@ -18,7 +18,7 @@ namespace Nox.Network.Assets {
 
 		AssetChannel Channel { get; }
 
-		/// <summary>Alternative references of the release, e.g. <c>{ key: "nid", value: … }</c>.</summary>
+		/// <summary>Alternative references of the release, e.g. <c>{ key: "nid", value: ... }</c>.</summary>
 		IAssetAttribute[] Alias { get; }
 
 		IAssetStatus Status { get; }

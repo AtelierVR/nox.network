@@ -3,7 +3,7 @@ using Nox.Network.Assets;
 
 namespace Nox.CCK.Network.Assets {
 	/// <summary>
-	/// Builds the REST paths of the asset pipeline (<c>/{endpoint}/…</c>) relative to the node
+	/// Builds the REST paths of the asset pipeline (<c>/{endpoint}/...</c>) relative to the node
 	/// gateway. <c>{reference}</c> accepts an id or a name; names and versions are escaped.
 	/// </summary>
 	public static class AssetRoutes {
@@ -25,14 +25,26 @@ namespace Nox.CCK.Network.Assets {
 		public static string Release(AssetEndpoint endpoint, string asset, string release)
 			=> $"{Releases(endpoint, asset)}/{Escape(release)}";
 
+		public static string Release(AssetEndpoint endpoint, string asset, uint release)
+			=> Release(endpoint, asset, release.ToString());
+
 		public static string Files(AssetEndpoint endpoint, string asset, string release)
 			=> $"{Release(endpoint, asset, release)}/files";
+
+		public static string Files(AssetEndpoint endpoint, string asset, uint release)
+			=> Files(endpoint, asset, release.ToString());
 
 		public static string File(AssetEndpoint endpoint, string asset, string release, string file)
 			=> $"{Files(endpoint, asset, release)}/{Escape(file)}";
 
+		public static string File(AssetEndpoint endpoint, string asset, uint release, string file)
+			=> File(endpoint, asset, release.ToString(), file);
+
 		public static string FileStatus(AssetEndpoint endpoint, string asset, string release, string file)
 			=> $"{File(endpoint, asset, release, file)}/status";
+
+		public static string FileStatus(AssetEndpoint endpoint, string asset, uint release, string file)
+			=> FileStatus(endpoint, asset, release.ToString(), file);
 
 		public static string Images(AssetEndpoint endpoint, string asset)
 			=> $"{Asset(endpoint, asset)}/images";

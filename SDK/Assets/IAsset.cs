@@ -8,7 +8,7 @@ namespace Nox.Network.Assets {
 	/// any other type declared with <c>@AssetController(type, endpoint)</c>.
 	/// </summary>
 	public interface IAsset {
-		/// <summary>Logical asset type (<c>avatar</c>, <c>world</c>, <c>mod</c>, …).</summary>
+		/// <summary>Logical asset type (<c>avatar</c>, <c>world</c>, <c>mod</c>, ...).</summary>
 		string Type { get; }
 
 		uint Id { get; }
@@ -40,7 +40,7 @@ namespace Nox.Network.Assets {
 
 		/// <summary>
 		/// Canonical reference of the asset (<c>&lt;type&gt;:&lt;id&gt;@&lt;server&gt;</c>).
-		/// The concrete model supplies the type (<c>w</c> for a world, …); the generic
+		/// The concrete model supplies the type (<c>w</c> for a world, ...); the generic
 		/// <c>Asset</c> leaves it <c>null</c>.
 		/// </summary>
 		Identifier Identifier { get; }

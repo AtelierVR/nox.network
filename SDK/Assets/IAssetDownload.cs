@@ -1,4 +1,3 @@
-using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine.Events;
 
@@ -14,6 +13,12 @@ namespace Nox.Network.Assets {
 		IAssetHash Hash { get; }
 
 		float Progress { get; }
+
+		/// <summary>HTTP status of the request, or <c>0</c> while running / when no answer was received.</summary>
+		long StatusCode { get; }
+
+		/// <summary><c>error.code</c> of the node envelope when the download failed, or <c>null</c>.</summary>
+		string ErrorCode { get; }
 
 		/// <summary>Failure message, or <c>null</c>.</summary>
 		string Error { get; }

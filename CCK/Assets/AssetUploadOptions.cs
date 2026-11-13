@@ -12,7 +12,7 @@ namespace Nox.CCK.Network.Assets {
 		/// <summary>Expected size in bytes, or <c>0</c> when unknown.</summary>
 		public long Length { get; set; }
 
-		/// <summary>Full <c>Content-Signature</c> envelope (<c>ed25519:MEQC…</c>), or <c>null</c>.</summary>
+		/// <summary>Full <c>Content-Signature</c> envelope (<c>ed25519:MEQC...</c>), or <c>null</c>.</summary>
 		public string Signature { get; set; }
 
 		/// <summary>Slot name override sent through <c>Content-Disposition</c>.</summary>

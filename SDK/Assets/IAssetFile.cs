@@ -15,7 +15,7 @@ namespace Nox.Network.Assets {
 
 		IAssetAttribute[] Attributes { get; }
 
-		/// <summary>Alternative references of the file, e.g. <c>{ key: "api", value: … }</c>.</summary>
+		/// <summary>Alternative references of the file, e.g. <c>{ key: "api", value: ... }</c>.</summary>
 		IAssetAttribute[] Alias { get; }
 
 		IAssetStatus Status { get; }
@@ -36,7 +36,7 @@ namespace Nox.Network.Assets {
 		long Size { get; }
 
 		/// <summary>
-		/// Content hashes, kept with their algorithm (<c>sha256:0123…</c>). Empty until computed.
+		/// Content hashes, kept with their algorithm (<c>sha256:0123...</c>). Empty until computed.
 		/// </summary>
 		IAssetHash[] Hashs { get; }
 
@@ -45,7 +45,7 @@ namespace Nox.Network.Assets {
 
 		IAssetAnalysis Analysis { get; }
 
-		/// <summary>Detached signature over the file hash (<c>ed25519:…</c>), or <c>null</c>.</summary>
+		/// <summary>Detached signature over the file hash (<c>ed25519:...</c>), or <c>null</c>.</summary>
 		string Signature { get; }
 
 		DateTime CreatedAt { get; }

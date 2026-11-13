@@ -10,7 +10,7 @@ namespace Nox.CCK.Network.Assets {
 	/// any other type declared with <c>@AssetController(type, endpoint)</c>.
 	/// </summary>
 	[Serializable]
-	public class Asset : IAsset {
+	public class BaseAsset : IAsset {
 		[JsonProperty("type")]
 		public string Type { get; internal set; }
 
@@ -43,7 +43,7 @@ namespace Nox.CCK.Network.Assets {
 
 		/// <summary>
 		/// Canonical reference of the asset. The generic model carries no type: a typed model
-		/// (<c>World</c>, <c>Avatar</c>, …) overrides it with its own single-character type.
+		/// (<c>World</c>, <c>Avatar</c>, ...) overrides it with its own single-character type.
 		/// </summary>
 		[JsonIgnore]
 		public virtual Identifier Identifier
@@ -74,6 +74,6 @@ namespace Nox.CCK.Network.Assets {
 			=> Images;
 
 		public override string ToString()
-			=> $"{nameof(Asset)}[{Id}, {Name ?? "<no-name>"}, owner={Owner}]";
+			=> $"{nameof(BaseAsset)}[{Id}, {Name ?? "<no-name>"}, owner={Owner}]";
 	}
 }

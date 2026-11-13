@@ -7,13 +7,13 @@ using Nox.Network.Assets;
 namespace Nox.CCK.Network.Assets {
 	/// <summary>
 	/// Paginated search result of one asset type: <typeparamref name="TItem"/> is the model the
-	/// items are deserialized as (<see cref="Asset"/> for the generic pipeline, a <c>Mod</c>,
-	/// <c>World</c>, … for a typed collection). The navigator is set by the client that produced
+		/// items are deserialized as (<see cref="BaseAsset"/> for the generic pipeline, a <c>ModAsset</c>,
+	/// <c>World</c>, ... for a typed collection). The navigator is set by the client that produced
 	/// the response so that <see cref="Next"/> and <see cref="Previous"/> can re-issue the search
 	/// without the model knowing about the network stack.
 	/// </summary>
 	[Serializable]
-	public class AssetSearchResponse<TItem> : IAssetSearchResponse, IAssetSearchNavigator where TItem : Asset {
+	public class AssetSearchResponse<TItem> : IAssetSearchResponse, IAssetSearchNavigator where TItem : BaseAsset {
 		[JsonProperty("query")]
 		public string Query { get; internal set; }
 
@@ -62,11 +62,11 @@ namespace Nox.CCK.Network.Assets {
 	}
 
 	/// <summary>
-	/// Search result of the generic pipeline, its items typed as <see cref="Asset"/>.
+	/// Search result of the generic pipeline, its items typed as <see cref="BaseAsset"/>.
 	/// Use <see cref="AssetSearchResponse{TItem}"/> to deserialize the items as a specific model.
 	/// </summary>
 	[Serializable]
-	public class AssetSearchResponse : AssetSearchResponse<Asset> { }
+	public class AssetSearchResponse : AssetSearchResponse<BaseAsset> { }
 
 	/// <summary>
 	/// Paginated result of <c>GET /{endpoint}/{asset}/releases/{release}/files</c>: the same envelope
@@ -92,5 +92,31 @@ namespace Nox.CCK.Network.Assets {
 
 		public override string ToString()
 			=> $"{nameof(AssetFileSearchResponse)}[offset={Offset}, limit={Limit}, total={Total}, items={Items?.Length ?? 0}]";
+	}
+
+	/// <summary>
+	/// Paginated result of <c>GET /{endpoint}/{asset}/releases</c>: the same envelope as a search, its items
+	/// typed as <see cref="AssetRelease"/>. Only completed releases are listed unless the query asks for
+	/// other statuses (<c>?status=all</c>).
+	/// </summary>
+	[Serializable]
+	public class AssetReleaseSearchResponse {
+		[JsonProperty("query")]
+		public string Query { get; internal set; }
+
+		[JsonProperty("total")]
+		public uint Total { get; internal set; }
+
+		[JsonProperty("limit")]
+		public uint Limit { get; internal set; }
+
+		[JsonProperty("offset")]
+		public uint Offset { get; internal set; }
+
+		[JsonProperty("items")]
+		public AssetRelease[] Items { get; internal set; } = Array.Empty<AssetRelease>();
+
+		public override string ToString()
+			=> $"{nameof(AssetReleaseSearchResponse)}[offset={Offset}, limit={Limit}, total={Total}, items={Items?.Length ?? 0}]";
 	}
 }

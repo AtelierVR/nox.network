@@ -15,7 +15,7 @@ namespace Nox.Network.Assets {
 		long Length { get; set; }
 
 		/// <summary>
-		/// Full <c>Content-Signature</c> envelope sent as-is (e.g. <c>ed25519:MEQC…</c>),
+		/// Full <c>Content-Signature</c> envelope sent as-is (e.g. <c>ed25519:MEQC...</c>),
 		/// or <c>null</c>.
 		/// </summary>
 		string Signature { get; set; }

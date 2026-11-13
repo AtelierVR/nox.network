@@ -1,7 +1,7 @@
 using System;
 
 namespace Nox.Network.Assets {
-	/// <summary>Image attached to an asset (cover, gallery, …).</summary>
+	/// <summary>Image attached to an asset (cover, gallery, ...).</summary>
 	public interface IAssetImage {
 		string Url { get; }
 

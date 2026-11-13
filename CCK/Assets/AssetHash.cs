@@ -7,7 +7,7 @@ using Nox.Network.Assets;
 namespace Nox.CCK.Network.Assets {
 	/// <summary>
 	/// A content hash kept with its algorithm. The API sends <c>&lt;type&gt;:&lt;hex&gt;</c>
-	/// (e.g. <c>sha256:0123…</c>): the algorithm is preserved in <see cref="Type"/> and the
+	/// (e.g. <c>sha256:0123...</c>): the algorithm is preserved in <see cref="Type"/> and the
 	/// hexadecimal payload is decoded to <see cref="Digest"/> through
 	/// <see cref="HexaToBytes"/>. A Base64 payload is still tolerated
 	/// (<see cref="Base64ToBytes"/>) so a non-hex digest cannot break deserialization.

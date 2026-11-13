@@ -70,15 +70,15 @@ namespace Nox.Network.Runtime {
 			var first = true;
 
 			foreach (var mod in mods) {
-				if (mod?.IsLoaded() != true) continue;
+				if (mod?.IsLoaded != true) continue;
 
-				var metadata = mod.GetMetadata();
+				var metadata = mod.Metadata;
 				if (metadata == null) continue;
 
 				if (!first) builder.Append("; ");
-				builder.Append(metadata.GetId());
+				builder.Append(metadata.Id);
 				builder.Append('/');
-				builder.Append(metadata.GetVersion());
+				builder.Append(metadata.Version);
 				first = false;
 			}
 
@@ -154,12 +154,27 @@ namespace Nox.Network.Runtime {
 		}
 
 		[NoxPublic(NoxAccess.Method)]
-		public async UniTask<string> DownloadFile(string url, string hash, UnityWebRequest req = null, Action<float, ulong> progress = null, CancellationToken token = default) {
-			if (string.IsNullOrEmpty(url) || string.IsNullOrEmpty(hash)) {
+		public async UniTask<IDownloadResult> DownloadFile(string url, IDownloadOptions options = null, CancellationToken token = default) {
+			var hash     = options?.Hash;
+			var progress = options?.Progress;
+
+			if (string.IsNullOrEmpty(url) || !AssetHash.Has(hash)) {
 				Logger.LogWarning("URL or hash is null or empty.", tag: "Network");
-				return null;
+				return new DownloadResult(0, "URL or hash is null or empty.");
 			}
 
+			// The download never waits for an analysis: a 409 ANALYSIS_PENDING is reported through
+			// the result, and the caller refetches the file status and retries when it can.
+			return await DownloadFileOnce(url, hash, progress, token);
+		}
+
+		/// <summary>Single download attempt, verified against <paramref name="expected"/>.</summary>
+		private async UniTask<IDownloadResult> DownloadFileOnce(
+			string url,
+			IAssetHash expected,
+			Action<float, ulong> progress,
+			CancellationToken token
+		) {
 			var tmp = Path.Combine(Application.temporaryCachePath, Guid.NewGuid().ToString());
 			var request = _activeRequests.FirstOrDefault(r => r.url == url);
 
@@ -177,26 +192,39 @@ namespace Nox.Network.Runtime {
 			}
 
 			if (!request.Ok()) {
-				Logger.LogWarning($"Failed to download file from {url}.", tag: "Network");
+				var code = DownloadEnvelope.ReadCode(request, tmp, out var message);
+
+				if (!string.Equals(code, AssetErrorCodes.AnalysisPending, StringComparison.OrdinalIgnoreCase))
+					Logger.LogWarning(
+						$"Failed to download file from {url} (HTTP {request.responseCode}"
+						+ (string.IsNullOrEmpty(code) ? string.Empty : $", {code}")
+						+ ").",
+						tag: "Network"
+					);
+
 				if (File.Exists(tmp))
 					File.Delete(tmp);
-				return null;
+
+				return new DownloadResult(
+					request.responseCode,
+					message ?? request.error ?? $"HTTP {request.responseCode}",
+					code
+				);
 			}
 
 			// Le hash attendu vient du pipeline d'assets : "sha256:<hex>" ou "<type>-<hex>" (nom de
 			// fichier de cache). Hashing.HashFile(path) rend un digest nu : comparer les deux textes
 			// tels quels rate toujours, on compare donc les valeurs décodées.
-			var expected = AssetHash.Parse(hash);
-			var actual   = AssetHash.Parse(await Digest(tmp, expected));
+			var actual = AssetHash.Parse(await Digest(tmp, expected));
 
 			if (!AssetHash.Matches(expected, actual)) {
 				Logger.LogWarning($"Hash mismatch for file downloaded from {url} (expected {expected}, got {actual}).", tag: "Network");
 				if (File.Exists(tmp))
 					File.Delete(tmp);
-				return null;
+				return new DownloadResult(request.responseCode, $"Hash mismatch (expected {expected}, got {actual}).");
 			}
 
-			return tmp;
+			return new DownloadResult(tmp);
 		}
 
 		/// <summary>

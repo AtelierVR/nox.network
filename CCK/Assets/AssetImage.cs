@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 using Nox.Network.Assets;
 
 namespace Nox.CCK.Network.Assets {
-	/// <summary>Image attached to an asset (cover, gallery, …).</summary>
+	/// <summary>Image attached to an asset (cover, gallery, ...).</summary>
 	[Serializable]
 	public class AssetImage : IAssetImage {
 		public AssetImage() { }

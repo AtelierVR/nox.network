@@ -6,7 +6,7 @@ using Nox.Network.Assets;
 namespace Nox.CCK.Network.Assets {
 	/// <summary>
 	/// Body of the release routes. Only assigned fields are sent, so the same object works for
-	/// <c>PUT …/releases</c> (create) and <c>PATCH …/releases/{release}</c> (update).
+	/// <c>PUT .../releases</c> (create) and <c>PATCH .../releases/{release}</c> (update).
 	/// </summary>
 	[Serializable]
 	public class AssetReleaseRequest : AssetRequestBody, IAssetReleaseRequest {

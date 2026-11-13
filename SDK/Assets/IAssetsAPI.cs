@@ -5,16 +5,16 @@ using Cysharp.Threading.Tasks;
 namespace Nox.Network.Assets {
 	/// <summary>
 	/// Generic client for the Nox asset pipeline: it drives the same routes for every asset type
-	/// (avatars, worlds, mods, props, …) declared with <c>@AssetController(type, endpoint)</c>,
+	/// (avatars, worlds, mods, props, ...) declared with <c>@AssetController(type, endpoint)</c>,
 	/// and caches downloaded files by hash.
 	///
 	/// Upload flow (per variant):
 	/// <list type="number">
 	/// <item><description><see cref="Create"/> — <c>PUT /{endpoint}</c></description></item>
 	/// <item><description><see cref="CreateRelease"/> — <c>PUT /{endpoint}/{asset}/releases</c></description></item>
-	/// <item><description><see cref="ReserveFile"/> — <c>POST …/releases/{release}/files</c></description></item>
+	/// <item><description><see cref="ReserveFile"/> — <c>POST .../releases/{release}/files</c></description></item>
 	/// <item><description><see cref="UploadFile"/> — <c>PUT {slot.Url}</c>, or <see cref="Upload"/> for both steps</description></item>
-	/// <item><description><see cref="FetchFile"/> — poll <c>…/files/{file}/status</c> until <c>completed</c>/<c>failed</c></description></item>
+	/// <item><description><see cref="FetchFile"/> — poll <c>.../files/{file}/status</c> until <c>completed</c>/<c>failed</c></description></item>
 	/// </list>
 	/// </summary>
 	public interface IAssetsAPI {
@@ -31,7 +31,7 @@ namespace Nox.Network.Assets {
 
 		/// <summary>
 		/// Searches the collection and deserializes the items as the model of the asset type
-		/// (<c>AssetSearchResponse&lt;Mod&gt;</c>, …) instead of the generic <see cref="Asset"/>.
+		/// (<c>AssetSearchResponse&lt;ModAsset&gt;</c>, ...) instead of the generic <see cref="BaseAsset"/>.
 		/// </summary>
 		UniTask<TResponse> Search<TResponse>(
 			string server,
@@ -52,7 +52,7 @@ namespace Nox.Network.Assets {
 
 		/// <summary>
 		/// Fetches a single asset and deserializes it as the model of the asset type
-		/// (<c>World</c>, <c>Mod</c>, …) instead of the generic <see cref="Asset"/>.
+		/// (<c>WorldAsset</c>, <c>ModAsset</c>, ...) instead of the generic <see cref="BaseAsset"/>.
 		/// </summary>
 		/// <param name="full">Expands <c>url</c> and the release preference (adds <c>?full=1</c>).</param>
 		UniTask<TAsset> Fetch<TAsset>(
@@ -73,9 +73,19 @@ namespace Nox.Network.Assets {
 			CancellationToken token = default
 		);
 
+		/// <summary>Same route, addressing the release by its numeric id.</summary>
+		UniTask<IAssetRelease> FetchRelease(
+			string server,
+			AssetEndpoint endpoint,
+			string asset,
+			uint release,
+			bool full = false,
+			CancellationToken token = default
+		);
+
 		/// <summary>
 		/// Fetches the release the asset resolves to, resolving <c>auto</c> to the newest release
-		/// (<c>GET /{endpoint}/{asset}?full=1</c> then <c>GET …/releases/{id}</c>).
+		/// (<c>GET /{endpoint}/{asset}?full=1</c> then <c>GET .../releases/{id}</c>).
 		/// </summary>
 		UniTask<IAssetRelease> FetchPreferredRelease(
 			string server,
@@ -84,12 +94,39 @@ namespace Nox.Network.Assets {
 			CancellationToken token = default
 		);
 
-		/// <summary>Reads a file slot without streaming its bytes (<c>GET …/files/{file}/status</c>).</summary>
+		/// <summary>
+		/// Lists the releases of an asset (<c>GET /{endpoint}/{asset}/releases</c>), walking the pages until
+		/// <c>total</c> is reached. Only completed releases are listed unless <paramref name="statuses"/> asks
+		/// for more (<c>all</c>, <c>queued</c>, <c>awaiting</c>, <c>failed</c>...).
+		/// <para>
+		/// <paramref name="query"/> is sent as <c>?query=</c>; the node filters on it.
+		/// </para>
+		/// </summary>
+		UniTask<IAssetRelease[]> FetchReleases(
+			string server,
+			AssetEndpoint endpoint,
+			string asset,
+			string query = null,
+			string[] statuses = null,
+			CancellationToken token = default
+		);
+
+		/// <summary>Reads a file slot without streaming its bytes (<c>GET .../files/{file}/status</c>).</summary>
 		UniTask<IAssetFile> FetchFile(
 			string server,
 			AssetEndpoint endpoint,
 			string asset,
 			string release,
+			string file,
+			CancellationToken token = default
+		);
+
+		/// <summary>Same route, addressing the release by its numeric id.</summary>
+		UniTask<IAssetFile> FetchFile(
+			string server,
+			AssetEndpoint endpoint,
+			string asset,
+			uint release,
 			string file,
 			CancellationToken token = default
 		);
@@ -105,6 +142,15 @@ namespace Nox.Network.Assets {
 			AssetEndpoint endpoint,
 			string asset,
 			string release,
+			CancellationToken token = default
+		);
+
+		/// <summary>Same route, addressing the release by its numeric id.</summary>
+		UniTask<IAssetFile[]> FetchFiles(
+			string server,
+			AssetEndpoint endpoint,
+			string asset,
+			uint release,
 			CancellationToken token = default
 		);
 
@@ -130,7 +176,7 @@ namespace Nox.Network.Assets {
 
 		/// <summary>
 		/// Creates the asset and deserializes the reply as the model of the asset type
-		/// (<c>WorldCreateRequest</c> with a <c>World</c>, …).
+		/// (<c>WorldCreateRequest</c> with a <c>World</c>, ...).
 		/// </summary>
 		UniTask<TAsset> Create<TAsset>(
 			string server,
@@ -182,6 +228,16 @@ namespace Nox.Network.Assets {
 			AssetEndpoint endpoint,
 			string asset,
 			string release,
+			IAssetReleaseRequest request,
+			CancellationToken token = default
+		);
+
+		/// <summary>Same route, addressing the release by its numeric id.</summary>
+		UniTask<IAssetRelease> UpdateRelease(
+			string server,
+			AssetEndpoint endpoint,
+			string asset,
+			uint release,
 			IAssetReleaseRequest request,
 			CancellationToken token = default
 		);
@@ -240,7 +296,20 @@ namespace Nox.Network.Assets {
 			CancellationToken token = default
 		);
 
-		/// <summary>Deletes a file (<c>DELETE …/files/{file}</c>).</summary>
+		/// <summary>Same route, addressing the release by its numeric id.</summary>
+		UniTask<IAssetFile> Upload(
+			string server,
+			AssetEndpoint endpoint,
+			string asset,
+			uint release,
+			string filePath,
+			IAssetFileReservation reservation = null,
+			IAssetUploadOptions options = null,
+			Action<float, ulong> progress = null,
+			CancellationToken token = default
+		);
+
+		/// <summary>Deletes a file (<c>DELETE .../files/{file}</c>).</summary>
 		UniTask<bool> DeleteFile(
 			string server,
 			AssetEndpoint endpoint,
@@ -250,10 +319,26 @@ namespace Nox.Network.Assets {
 			CancellationToken token = default
 		);
 
+		/// <summary>Same route, addressing the release by its numeric id.</summary>
+		UniTask<bool> DeleteFile(
+			string server,
+			AssetEndpoint endpoint,
+			string asset,
+			uint release,
+			string file,
+			CancellationToken token = default
+		);
+
 		/// <summary>
 		/// Downloads a file into the cache and returns its local path
 		/// (<c>GET /{endpoint}/{asset}/releases/{release}/files/{file}</c>).
 		/// The cache is consulted first using the hash reported by the slot status.
+		/// <para>
+		/// A file is only served once it is analyzed: while the analysis runs (or when the file was
+		/// analyzed by an older analyzer version and is queued for re-analysis) the download
+		/// answers a <c>409 ANALYSIS_PENDING</c>, so the file status is polled until it is
+		/// <c>completed</c> and the download is retried.
+		/// </para>
 		/// </summary>
 		UniTask<string> Download(
 			string server,
@@ -265,7 +350,7 @@ namespace Nox.Network.Assets {
 			CancellationToken token = default
 		);
 
-		/// <summary>Downloads an arbitrary URL (thumbnail, image, …) into the shared cache.</summary>
+		/// <summary>Downloads an arbitrary URL (thumbnail, image, ...) into the shared cache.</summary>
 		UniTask<string> DownloadUrl(
 			string url,
 			IAssetHash hash = null,
@@ -291,5 +376,19 @@ namespace Nox.Network.Assets {
 			int index,
 			CancellationToken token = default
 		);
-	}
+
+                /// <summary>
+                /// Changes the metadata of an image (<c>PATCH /{endpoint}/{asset}/images/{index}</c>):
+                /// its <c>priority</c> (higher is picked first) and its <c>alt</c> text.
+                /// </summary>
+                UniTask<IAsset> UpdateImage(
+                        string server,
+                        AssetEndpoint endpoint,
+                        string asset,
+                        int index,
+                        int priority,
+                        string alt,
+                        CancellationToken token = default
+                );
+        }
 }

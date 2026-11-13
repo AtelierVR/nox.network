@@ -2,7 +2,7 @@ namespace Nox.Network.Assets {
 	/// <summary>
 	/// Status of a file or release slot. The API sends either a plain string
 	/// (<c>"completed"</c>) or an object
-	/// (<c>{ "status": "processing", "progress": { "current": 45, "total": 227 }, "message": "…" }</c>).
+	/// (<c>{ "status": "processing", "progress": { "current": 45, "total": 227 }, "message": "..." }</c>).
 	/// </summary>
 	public interface IAssetStatus {
 		/// <summary>
@@ -13,7 +13,7 @@ namespace Nox.Network.Assets {
 
 		/// <summary>
 		/// <c>progress</c>: live <c>{ current, total }</c> steps, or <c>null</c> while they cannot
-		/// be estimated (right after the upload, while the bundle loads, when the scan is done, …).
+		/// be estimated (right after the upload, while the bundle loads, when the scan is done, ...).
 		/// </summary>
 		IAssetProgress Progress { get; }
 

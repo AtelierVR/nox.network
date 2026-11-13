@@ -7,7 +7,7 @@ namespace Nox.CCK.Network.Assets {
 	/// <summary>
 	/// Status of a file or release slot. The API sends either a plain string
 	/// (<c>"completed"</c>) or an object
-	/// (<c>{ "status": "processing", "progress": { "current": 45, "total": 227 }, "message": "…" }</c>),
+	/// (<c>{ "status": "processing", "progress": { "current": 45, "total": 227 }, "message": "..." }</c>),
 	/// so the converter normalizes both shapes.
 	/// </summary>
 	[Serializable]

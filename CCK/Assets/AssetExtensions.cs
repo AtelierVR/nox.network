@@ -52,14 +52,14 @@ namespace Nox.CCK.Network.Assets {
 
 		/// <summary>
 		/// Value of an alternative reference of the asset (<c>api</c> for its canonical URL,
-		/// <c>iid</c>, <c>nid</c>, <c>github</c> when it is backed by a repository, …),
+		/// <c>iid</c>, <c>nid</c>, <c>github</c> when it is backed by a repository, ...),
 		/// or <c>null</c> when the asset has no such reference.
 		/// </summary>
 		public static string Alias(this IAsset asset, string key)
 			=> asset?.Alias?.FirstOrDefault(alias => alias?.Key == key)?.Value;
 
 		/// <summary>
-		/// Value of a file attribute (<c>platform</c>, <c>arch</c>, <c>engine</c>, …),
+		/// Value of a file attribute (<c>platform</c>, <c>arch</c>, <c>engine</c>, ...),
 		/// or <c>null</c> when the file does not declare it.
 		/// </summary>
 		public static string Attribute(this IAssetFile file, string key)
