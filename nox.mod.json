@@ -25,8 +25,7 @@
   ],
   "entrypoints": {
     "main": [
-      "Nox.Network.Runtime.Main",
-      "Nox.Network.Runtime.Assets.AssetsClient"
+      "Nox.Network.Runtime.Main"
     ]
   },
   "relations": [

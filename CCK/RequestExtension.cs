@@ -127,10 +127,10 @@ namespace Nox.CCK.Network {
 		/// Sends the request and returns its success. An error status from the server
 		/// (4xx/5xx) gives <c>false</c> instead of an exception, so the caller can read
 		/// <c>request.responseCode</c> and <c>request.error</c> itself. Any other failure
-		/// (no reply at all, invalid data…) and cancellation are still thrown.
+		/// (no reply at all, invalid data...) and cancellation are still thrown.
 		/// </summary>
 		public static async UniTask<bool> Send(this UnityWebRequest request, CancellationToken token = default) {
-		    if (request == null) 
+		    if (request == null)
 				throw new ArgumentNullException(nameof(request));
 
 		    if (request.IsSent()) {
@@ -159,7 +159,7 @@ namespace Nox.CCK.Network {
 		            $"Request to {request.method} {request.url} failed with exception:\n{request.result} - {request.error}",
 		            ex
 		        ));
-		        throw; 
+		        throw;
 		    } finally {
 		        await OnCompleted.InvokeAsync(request);
 		    }
@@ -175,7 +175,7 @@ namespace Nox.CCK.Network {
 				Method.DELETE => Color.red,
 				_             => Color.white
 			};
-			
+
 			var urlDisplay = request.url.Length > 64
 				? request.url[..64]
 				: request.url;
@@ -211,7 +211,7 @@ namespace Nox.CCK.Network {
 				return JsonConvert.DeserializeObject<T>(text);
 			} finally {
 				// Never leave the caller on the ThreadPool thread, even when the payload is not
-				// the expected JSON: Unity APIs (result, responseCode, error…) are main thread only.
+				// the expected JSON: Unity APIs (result, responseCode, error...) are main thread only.
 				await UniTask.SwitchToMainThread(cancellationToken: CancellationToken.None);
 			}
 		}

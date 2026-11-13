@@ -174,6 +174,7 @@ namespace Nox.CCK.Network {
 
 				var req = RequestExtension.To(resolvedUrl);
 				req.downloadHandler = new DownloadHandlerTexture();
+				req.timeout         = 15;
 				req.SetRequestHeader("Accept", "image/png, image/jpeg");
 
 				if (await req.Send(_cts.Token) && !_cts.IsCancellationRequested) {

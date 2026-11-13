@@ -1,7 +1,7 @@
 # nox.network — asset pipeline
 
 `nox.network` also hosts the **generic asset pipeline client** shared by every asset type
-(avatars, worlds, mods, props, …). It drives the same routes for all of them; only the
+(avatars, worlds, mods, props, ...). It drives the same routes for all of them; only the
 `AssetEndpoint` changes.
 
 The server side is described in `docs/UPLOAD_PIPELINE.md` of the Nox node repository.
@@ -39,14 +39,14 @@ Downloads are content-addressed: the cache is keyed by the file hash, so the sam
 only fetched once, and concurrent requests for the same URL share a single transfer.
 
 ```csharp
-// GET …/mods/{id}/releases/{release}/files/{name}, verified against the slot hash
+// GET .../mods/{id}/releases/{release}/files/{name}, verified against the slot hash
 var path = await assets.Download(server, Mods, "my-mod", "v1.0.0", "my-mod-windows.bundle", (progress, bytes) => { });
 
-// Any URL (thumbnail, image, …) can use the same cache
+// Any URL (thumbnail, image, ...) can use the same cache
 var cover = await assets.DownloadUrl(imageUrl);
 
 var slot = await assets.FetchFile(server, Mods, "my-mod", "v1.0.0", "my-mod-windows.bundle");
-var hash = slot.Hashs[0];             // "sha256:…" reported by the API
+var hash = slot.Hashs[0];             // "sha256:..." reported by the API
 assets.Cache.Has(hash);               // already downloaded? (algorithm + digest)
 assets.Cache.PathFor(hash);           // local path
 assets.Cache.Clear(hash);             // drop one entry
@@ -101,7 +101,7 @@ var asset = await assets.Create(
 // 2. create the release                    PUT /mods/{id}/releases
 var release = await assets.CreateRelease(server, Mods, asset.Name, new AssetReleaseRequest { Name = "v1.0.0" });
 
-// 3 + 4. reserve a slot                     POST …/releases/{rid}/files
+// 3 + 4. reserve a slot                     POST .../releases/{rid}/files
 //        then stream the bytes             PUT {slot.Url}
 await assets.Upload(
 	server, Mods, asset.Name, release.Name, "my-mod-windows.bundle",
@@ -130,7 +130,7 @@ name/`Content-Type` override.
 
 ```csharp
 var page = await assets.Search(server, Mods, new AssetSearchRequest { Query = "bunny", Limit = 20 });
-foreach (var item in page.Items) { /* item.Id, item.Name, item.Release, item.Images … */ }
+foreach (var item in page.Items) { /* item.Id, item.Name, item.Release, item.Images ... */ }
 
 var next = await page.Next();                   // the client wires the navigation
 var asset = await assets.Fetch(server, Mods, "my-mod", full: true);
@@ -154,13 +154,13 @@ var item  = page.Items[0];   // World, not Asset
 ```
 
 A type is free to rely on its own release naming: worlds name each release after the world
-version it publishes (`"1"`, `"2"`, …), so a world identifier pinned with `?v=2` resolves to the
+version it publishes (`"1"`, `"2"`, ...), so a world identifier pinned with `?v=2` resolves to the
 release named `2` — the release routes accept a name wherever they accept an id.
 
 ## Statuses and polling
 
 `IAssetStatus` normalizes both wire shapes (`"completed"` and
-`{ "status": "queued", "progress": 0, "message": "…" }`) into a `Status` (`AssetState`),
+`{ "status": "queued", "progress": 0, "message": "..." }`) into a `Status` (`AssetState`),
 `Progress` and `Message` — an unknown or omitted value reads as `AssetState.Unknown`.
 
 - `IAssetFile.RefetchAt` / `IAssetRelease.RefetchAt` are set while the resource is pending and

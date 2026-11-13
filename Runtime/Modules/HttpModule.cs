@@ -129,15 +129,15 @@ namespace Nox.Network.Runtime.Modules {
 		// ── HTTP methods ──────────────────────────────────────────────────────
 
 		/// <summary>
-		/// Shared implementation for verb-specific methods (get, post, put, del, …).
+		/// Shared implementation for verb-specific methods (get, post, put, del, ...).
 		/// args[0] = url, args[1] = optional options object.
 		/// </summary>
 		private static UniTask<object> RequestAsync(string method, object[] args) {
 			if (args.Length == 0 || string.IsNullOrEmpty(args[0]?.ToString()))
 				return UniTask.FromResult<object>(null);
 			return DoRequest(
-				method.ToUpperInvariant(), 
-				args[0].ToString(), 
+				method.ToUpperInvariant(),
+				args[0].ToString(),
 				args.Length > 1 ? args[1] : null
 			);
 		}
